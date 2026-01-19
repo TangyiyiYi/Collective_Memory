@@ -1,0 +1,83 @@
+==============================================================================
+SIMULATIONS DIRECTORY REORGANIZATION - COMPLETED
+==============================================================================
+Date: 2026-01-18
+
+ACTIONS PERFORMED:
+------------------
+
+1. ✅ Created new directory structure:
+   - src/ (core code)
+   - notebooks/ (interactive analysis)
+   - outputs/ (generated results)
+   - archive/ (legacy files)
+
+2. ✅ Moved active code to src/:
+   - rem_core.py
+   - group_rules.py
+   - run_simulation.py
+
+3. ✅ Moved notebooks and exports:
+   - bahrami_sweep_demo.ipynb → notebooks/
+   - PDF/HTML exports → notebooks/exports/
+
+4. ✅ Moved current outputs to outputs/:
+   - bahrami_sweep_final.csv
+   - bahrami_sweep_plot.png
+   - rich_theory_verification.png
+   - miscalibration_sweep.csv
+   - miscalibration_plot.png
+
+5. ✅ Archived legacy files:
+   - legacy_code/ (3 old Python scripts)
+   - legacy_results/ (8 old figures and CSVs from Nov 2024)
+   - legacy_docs/ (2 old documents)
+
+6. ✅ Cleaned system files:
+   - Deleted .DS_Store
+   - Deleted __pycache__/
+
+7. ✅ Created .gitignore:
+   - Ignores outputs/, __pycache__/, .DS_Store, etc.
+
+8. ✅ Updated code paths:
+   - run_simulation.py: All 5 output paths updated to ../outputs/
+   - bahrami_sweep_demo.ipynb: Added sys.path, updated all CSV/image paths
+
+9. ✅ Updated README.md:
+   - Added directory structure diagram
+   - Added quick start instructions
+   - Added project description
+
+VERIFICATION:
+-------------
+✅ All files in correct locations
+✅ No duplicate files remaining
+✅ Python imports working correctly
+✅ Directory structure clean and professional
+
+NEW STRUCTURE:
+--------------
+Simulations/
+├── src/                    # 3 core Python files
+├── notebooks/              # 1 notebook + 3 exports
+├── outputs/               # 5 current result files
+├── archive/               # 14 legacy files (organized)
+├── README.md              # Updated with usage instructions
+└── .gitignore            # Git configuration
+
+NEXT STEPS:
+-----------
+1. Navigate to notebooks/ directory
+2. Run: jupyter notebook bahrami_sweep_demo.ipynb
+3. Verify all cells execute correctly
+4. Check that outputs are generated in outputs/ directory
+
+NOTES:
+------
+- All original files preserved (only moved, not deleted)
+- Results are reproducible (fixed random seeds)
+- Archive contains legacy files for reference
+- outputs/ directory is gitignored (regenerate as needed)
+
+==============================================================================
