@@ -9,8 +9,8 @@ Implements 5 fusion rules:
 5. BF (Behavioral Feedback) - learn from individual correctness
 
 Plus confidence miscalibration rules (Prelec weighting):
-6. WCS_Miscal - Weighted Confidence Sharing with miscalibration
-7. DMC_Miscal - Defer to Max Confidence with miscalibration
+6. UW_Miscal - UW + Prelec (arithmetic mean of w, NOT Bahrami's WCS)
+7. DMC_Miscal - Defer to Max Confidence with miscalibration (max |w - 0.5|)
 
 All rules return d' metrics only.
 """
@@ -102,7 +102,8 @@ def coin_flip_rule(
     return {
         'dprime_A': dprime_A,
         'dprime_B': dprime_B,
-        'dprime_team': dprime_team
+        'dprime_team': dprime_team,
+        'decisions': D_team
     }
 
 
@@ -140,7 +141,8 @@ def uniform_weighting_rule(
     return {
         'dprime_A': dprime_A,
         'dprime_B': dprime_B,
-        'dprime_team': dprime_team
+        'dprime_team': dprime_team,
+        'decisions': D_team
     }
 
 
@@ -185,7 +187,8 @@ def defer_to_max_confidence(
     return {
         'dprime_A': dprime_A,
         'dprime_B': dprime_B,
-        'dprime_team': dprime_team
+        'dprime_team': dprime_team,
+        'decisions': D_team
     }
 
 
@@ -219,7 +222,8 @@ def direct_signal_sharing(
     return {
         'dprime_A': dprime_A,
         'dprime_B': dprime_B,
-        'dprime_team': dprime_team
+        'dprime_team': dprime_team,
+        'decisions': D_team
     }
 
 
@@ -271,7 +275,8 @@ def behavior_feedback_rule(
     return {
         'dprime_A': dprime_A,
         'dprime_B': dprime_B,
-        'dprime_team': dprime_team
+        'dprime_team': dprime_team,
+        'decisions': D_team
     }
 
 
@@ -320,7 +325,7 @@ def prelec_weighting(L: np.ndarray, alpha: float) -> np.ndarray:
     return w
 
 
-def wcs_miscal_rule(
+def uw_miscal_rule(
     L_A: np.ndarray,
     L_B: np.ndarray,
     labels: np.ndarray,
@@ -329,14 +334,16 @@ def wcs_miscal_rule(
     alpha_B: float
 ) -> Dict[str, float]:
     """
-    Weighted Confidence Sharing with miscalibration (Prelec weighting).
+    Uniform Weighting with miscalibration (Prelec weighting).
+
+    This is UW + Prelec, NOT Bahrami's WCS. Renamed per Tim's model specification.
 
     Logic:
     ------
     1. Compute w_A, w_B via Prelec weighting
     2. Treat w as probability of OLD
-    3. w_team = (w_A + w_B) / 2
-    4. Decision: OLD if w_team > 0.5
+    3. w_team = (w_A + w_B) / 2  (arithmetic mean, NOT confidence-weighted)
+    4. Decision: OLD if w_team > 0.5 (strictly greater than)
 
     Parameters:
     -----------
@@ -452,12 +459,12 @@ def dmc_miscal_rule(
 # RICH'S CONFLICT RESOLUTION MODEL
 # ============================================================================
 
-def rich_conflict_rule(L_A: np.ndarray, L_B: np.ndarray, labels: np.ndarray, rng: np.random.Generator):
+def rich_conflict_rule(L_A: np.ndarray, L_B: np.ndarray, labels: np.ndarray, rng: np.random.Generator, beta: float = 1.0):
     """
     Rich Shiffrin's Conflict Resolution Model.
 
     When agents disagree (Old vs New), the group chooses the agent with
-    stronger evidence according to: P = (1 + D) / (2 + D)
+    stronger evidence according to: P = ((1 + D) / (2 + D))^beta
     where D = |S_A - S_B| and S = max(φ', 1/φ'), φ' = φ^(1/11), φ = exp(L)
 
     Parameters:
@@ -468,10 +475,17 @@ def rich_conflict_rule(L_A: np.ndarray, L_B: np.ndarray, labels: np.ndarray, rng
         True labels (1 = Old, 0 = New)
     rng : np.random.Generator
         Random number generator
+    beta : float, default=1.0
+        Exponent parameter in probability formula
 
     Returns:
     --------
-    dict with dprime_A, dprime_B, dprime_team
+    dict with keys:
+        - dprime_A, dprime_B, dprime_team: sensitivity metrics
+        - decisions: team decision array
+        - conflict_mask: boolean array indicating conflict trials
+        - strength_A, strength_B: strength values for each trial
+        - D_values: strength difference |S_A - S_B| for each trial
     """
     # Individual decisions
     D_A = (L_A > 0).astype(int)
@@ -493,6 +507,9 @@ def rich_conflict_rule(L_A: np.ndarray, L_B: np.ndarray, labels: np.ndarray, rng
     # Identify conflict trials (strict definition)
     conflict_mask = ((L_A > 0) & (L_B < 0)) | ((L_A < 0) & (L_B > 0))
 
+    # Compute difference D for ALL trials (needed for return metadata)
+    D_diff = np.abs(S_A - S_B)
+
     # Initialize team decisions
     D_team = np.zeros_like(D_A)
 
@@ -502,11 +519,8 @@ def rich_conflict_rule(L_A: np.ndarray, L_B: np.ndarray, labels: np.ndarray, rng
 
     # Conflict trials: use Rich's probability rule
     if np.sum(conflict_mask) > 0:
-        # Compute difference D
-        D_diff = np.abs(S_A - S_B)
-
-        # Probability of choosing stronger
-        P_choose_stronger = (1.0 + D_diff) / (2.0 + D_diff)
+        # Probability of choosing stronger (with beta exponent)
+        P_choose_stronger = np.power((1.0 + D_diff) / (2.0 + D_diff), beta)
 
         # Determine who is stronger
         A_stronger = S_A > S_B
@@ -537,5 +551,69 @@ def rich_conflict_rule(L_A: np.ndarray, L_B: np.ndarray, labels: np.ndarray, rng
     return {
         'dprime_A': dprime_A,
         'dprime_B': dprime_B,
-        'dprime_team': dprime_team
+        'dprime_team': dprime_team,
+        'decisions': D_team,
+        'conflict_mask': conflict_mask,
+        'strength_A': S_A,
+        'strength_B': S_B,
+        'D_values': D_diff
+    }
+
+
+def best_odds_deterministic_rule(
+    L_A: np.ndarray,
+    L_B: np.ndarray,
+    labels: np.ndarray,
+    rng: np.random.Generator
+) -> Dict[str, float]:
+    """
+    Best Odds Deterministic rule: deterministic baseline for conflict resolution.
+
+    On conflict trials: ALWAYS choose the agent with larger |L| (stronger evidence).
+    On agreement trials: adopt the agreed decision.
+
+    This represents the "ceiling" for conflict-based decision approaches.
+
+    Parameters:
+    -----------
+    L_A, L_B : np.ndarray
+        Log-odds from agents A and B
+    labels : np.ndarray
+        True labels (1 = Old, 0 = New)
+    rng : np.random.Generator
+        Not used (kept for interface consistency)
+
+    Returns:
+    --------
+    dict with dprime_A, dprime_B, dprime_team, decisions
+    """
+    # Convert to binary decisions
+    D_A = (L_A > 0).astype(int)
+    D_B = (L_B > 0).astype(int)
+
+    # Detect conflict
+    conflict_mask = (D_A != D_B)
+
+    # Initialize with agreement
+    D_team = D_A.copy()
+
+    # On conflict: deterministically choose max |L|
+    if np.sum(conflict_mask) > 0:
+        conflict_indices = np.where(conflict_mask)[0]
+        for idx in conflict_indices:
+            if np.abs(L_A[idx]) > np.abs(L_B[idx]):
+                D_team[idx] = D_A[idx]
+            else:
+                D_team[idx] = D_B[idx]
+
+    # Compute d' metrics
+    dprime_A = compute_dprime_from_decisions(D_A, labels)
+    dprime_B = compute_dprime_from_decisions(D_B, labels)
+    dprime_team = compute_dprime_from_decisions(D_team, labels)
+
+    return {
+        'dprime_A': dprime_A,
+        'dprime_B': dprime_B,
+        'dprime_team': dprime_team,
+        'decisions': D_team
     }

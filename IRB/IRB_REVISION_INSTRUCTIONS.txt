@@ -1,0 +1,121 @@
+====================================================================================
+IRB PROTOCOL #29910 修订说明
+====================================================================================
+
+所有修订后的文件已生成，位于：/Users/yiytan/Collective_Memory/IRB/
+
+文件清单：
+1. #29910- SIS_Prolific_REVISED.docx
+2. #29910- SIS_SONA_REVISED.docx
+3. #29910- Recruitment_Ad_Prolific_REVISED.docx
+4. #29910- Recruitment_Ad_SONA_REVISED.docx
+5. #29910- INST_Prolific_REVISED.docx
+6. #29910- INST_SONA_REVISED.docx
+
+====================================================================================
+第一步：网页问答题（直接复制粘贴）
+====================================================================================
+
+问题 0812: Research Procedures
+--------------------------------
+复制以下全部内容：
+
+Data will be collected online via platforms such as Prolific and the IU Psychology Student Pool (SONA). The study procedures are identical for both subject groups.
+
+Duration: The study consists of a single session lasting approximately 20 minutes.
+
+Procedures:
+
+Participants will complete the study entirely online at a location of their choosing. After accessing the study via a secure link and reviewing the Study Information Sheet, clicking "Continue" indicates consent to participate.
+
+The experiment includes two main phases:
+
+1. Individual Phase:
+Participants will view a series of stimuli (such as words or images) and later complete a memory test where they indicate whether each item is "OLD" (previously seen) or "NEW" (not seen before). Participants may also rate their confidence in their judgments. This phase is completed independently with no interaction with other participants.
+
+2. Collaborative Phase:
+Participants will be grouped with other participants online. During this phase, participants can see information about other group members' responses (such as their judgments and/or confidence ratings), view summary statistics about the group's answers, and optionally discuss items through a text-based interface. Participants can then revise their original answers if they choose. All interaction occurs online through the web interface with no real-time video or audio communication.
+
+At the end, participants answer a brief question about whether they used external aids and receive a completion code for compensation.
+
+--------------------------------
+
+问题 0813: Identifiable Information
+--------------------------------
+Answer: No
+
+Explanation: Only Prolific IDs and SONA IDs are collected for compensation purposes and are removed from the dataset within 48 hours of study completion.
+
+--------------------------------
+
+问题 0818: Payment Arrangement
+--------------------------------
+复制以下全部内容：
+
+Prolific Participants:
+- Payment of $3.50 for completing the study
+- Disbursed through Prolific within 5 days
+
+SONA Participants:
+- 0.5 course credit for completing the study
+- Alternative: Students who do not wish to participate can earn the same credit by writing a short paper on a topic assigned by their instructor
+
+====================================================================================
+第二步：上传修订后的文件
+====================================================================================
+
+将以下6个 _REVISED.docx 文件上传到 IRB 系统：
+
+1. #29910- SIS_Prolific_REVISED.docx
+2. #29910- SIS_SONA_REVISED.docx
+3. #29910- Recruitment_Ad_Prolific_REVISED.docx
+4. #29910- Recruitment_Ad_SONA_REVISED.docx
+5. #29910- INST_Prolific_REVISED.docx (需要添加刺激 - 见下文)
+6. #29910- INST_SONA_REVISED.docx (需要添加刺激 - 见下文)
+
+====================================================================================
+第三步：添加实际实验刺激（CRITICAL）
+====================================================================================
+
+IRB 要求看到实际的实验材料，不仅仅是说明。
+
+在以下两个文件中添加真实的单词/图片：
+- #29910- INST_Prolific_REVISED.docx
+- #29910- INST_SONA_REVISED.docx
+
+需要添加的位置（文件中有明确标记）：
+
+位置 1: "EXPERIMENTAL STIMULI - STUDY PHASE"
+----------------------------------------------
+在 [USER TO ADD STIMULI HERE] 下方添加：
+- 10-20个学习阶段的单词或图片
+- 例如：apple, chair, table, computer, book, etc.
+- 或者：插入实际图片
+
+位置 2: "EXPERIMENTAL STIMULI - TEST PHASE"
+----------------------------------------------
+在 [USER TO ADD STIMULI HERE] 下方添加：
+- 测试阶段的项目列表
+- 必须包含：
+  * OLD items（来自学习列表的词）
+  * NEW items（新的词/图片，作为干扰项）
+- 例如：
+  1. apple - OLD
+  2. banana - NEW
+  3. chair - OLD
+  4. umbrella - NEW
+  ...
+
+====================================================================================
+第四步：验证一致性
+====================================================================================
+
+✓ 所有文件的时间都是 20 分钟
+✓ Prolific 支付 $3.50
+✓ SONA 0.5 学分 + alternative credit 选项
+✓ 两个平台的程序描述相同
+✓ INST 文件包含实际的实验材料示例
+
+====================================================================================
+完成！
+====================================================================================

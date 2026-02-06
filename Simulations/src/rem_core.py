@@ -231,6 +231,115 @@ def compute_log_odds(
     return L
 
 
+# ============================================================================
+# VECTORIZED IMPLEMENTATIONS (High Performance)
+# ============================================================================
+
+def compute_log_lambda_vectorized(
+    values: np.ndarray,
+    c: float,
+    g: float,
+    valid_mask: np.ndarray
+) -> np.ndarray:
+    """
+    Vectorized computation of log(λ_v) for matched feature values.
+
+    Parameters:
+    -----------
+    values : np.ndarray, shape (n_traces, w)
+        Trace values (only values where valid_mask is True will be processed)
+    c : float
+        Copy correctness probability
+    g : float
+        Geometric distribution parameter
+    valid_mask : np.ndarray, shape (n_traces, w)
+        Boolean mask indicating which positions to compute
+
+    Returns:
+    --------
+    log_lambdas : np.ndarray, shape (n_traces, w)
+        Log-likelihood ratios (0 where valid_mask is False)
+    """
+    result = np.zeros_like(values, dtype=np.float64)
+
+    # Only compute for valid positions (matched & non-zero)
+    if not np.any(valid_mask):
+        return result
+
+    v = values[valid_mask].astype(np.float64)
+
+    # P(v) = g * (1-g)^(v-1) with numerical floor
+    P_v = g * np.power(1 - g, v - 1)
+    P_v = np.maximum(P_v, MIN_P)
+
+    # λ_v = (c + (1-c)*P(v)) / P(v)
+    lambda_v = (c + (1 - c) * P_v) / P_v
+
+    result[valid_mask] = np.log(lambda_v)
+
+    return result
+
+
+def compute_log_odds_vectorized(
+    probe: np.ndarray,
+    traces: np.ndarray,
+    c: float,
+    g: float
+) -> float:
+    """
+    Vectorized computation of item-level log-odds L = log(Φ).
+
+    This is a high-performance version that eliminates nested Python loops
+    using NumPy broadcasting. Mathematically equivalent to compute_log_odds().
+
+    Parameters:
+    -----------
+    probe : np.ndarray, shape (w,)
+        Test item features
+    traces : np.ndarray, shape (n_traces, w)
+        Memory traces
+    c : float
+        Copy correctness probability
+    g : float
+        Geometric distribution parameter
+
+    Returns:
+    --------
+    L : float
+        Log-odds (log Φ). Decision rule: L > 0 → "Old", else "New"
+    """
+    from scipy.special import logsumexp
+
+    n_traces, w = traces.shape
+
+    # Step 1: Create boolean masks for all conditions
+    # Shape: (n_traces, w)
+    zero_mask = (traces == 0)                      # Unstored features
+    match_mask = (traces == probe) & ~zero_mask   # Matched & stored
+    mismatch_mask = ~zero_mask & ~match_mask       # Stored but mismatched
+
+    # Step 2: Compute log-likelihood contributions
+    # Initialize with zeros (neutral evidence for unstored features)
+    log_contributions = np.zeros((n_traces, w), dtype=np.float64)
+
+    # For matched features: compute log(λ_v) using vectorized helper
+    if np.any(match_mask):
+        log_contributions += compute_log_lambda_vectorized(traces, c, g, match_mask)
+
+    # For mismatched features: log(1-c)
+    if np.any(mismatch_mask):
+        log_mismatch = np.log(max(1 - c, EPSILON))
+        log_contributions[mismatch_mask] = log_mismatch
+
+    # Step 3: Sum across features for each trace
+    log_lambdas = np.sum(log_contributions, axis=1)  # Shape: (n_traces,)
+
+    # Step 4: Item-level log-odds: L = logsumexp(log λ) - log(N)
+    L = logsumexp(log_lambdas) - np.log(n_traces)
+
+    return L
+
+
 def print_storage_diagnostics(u: float, c: float, nSteps: int, traces: np.ndarray):
     """
     Print storage rate diagnostics for verification.
@@ -301,4 +410,39 @@ if __name__ == "__main__":
 
     print(f"Log-odds for Target: L = {L_old:.4f} ({'Old' if L_old > 0 else 'New'})")
     print(f"Log-odds for Foil: L = {L_new:.4f} ({'Old' if L_new > 0 else 'New'})")
+
+    # Verify vectorized implementation matches original
+    print("\n--- Vectorized Implementation Verification ---")
+    L_old_vec = compute_log_odds_vectorized(probe_old, traces, c, g)
+    L_new_vec = compute_log_odds_vectorized(probe_new, traces, c, g)
+
+    print(f"Vectorized Target: L = {L_old_vec:.4f}")
+    print(f"Vectorized Foil: L = {L_new_vec:.4f}")
+
+    # Check equivalence
+    assert np.isclose(L_old, L_old_vec, rtol=1e-10), f"Target mismatch: {L_old} vs {L_old_vec}"
+    assert np.isclose(L_new, L_new_vec, rtol=1e-10), f"Foil mismatch: {L_new} vs {L_new_vec}"
+
+    print("✓ Vectorized matches original (rtol=1e-10)")
+
+    # Performance comparison
+    import time
+    n_probes = 100
+    probes = rng.geometric(g, size=(n_probes, w))
+
+    start = time.time()
+    for p in probes:
+        compute_log_odds(p, traces, c, g)
+    original_time = time.time() - start
+
+    start = time.time()
+    for p in probes:
+        compute_log_odds_vectorized(p, traces, c, g)
+    vectorized_time = time.time() - start
+
+    print(f"\nPerformance ({n_probes} probes):")
+    print(f"  Original:   {original_time:.3f}s")
+    print(f"  Vectorized: {vectorized_time:.3f}s")
+    print(f"  Speedup:    {original_time/vectorized_time:.1f}x")
+
     print("\n✓ rem_core.py sanity test passed")

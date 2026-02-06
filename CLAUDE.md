@@ -1,451 +1,502 @@
 # Collective_Memory 项目
 
-## 项目概述
+## 📋 目录
 
-本项目研究 **群体记忆（Collective Memory）** 中的识别判断机制，核心目标是：
-
-> **用 REM 模型生成个体内部证据，再用不同的社会决策规则（CF / UM / WCS / DSS）将个体证据整合为群体判断。**
-
-这是一个跨学科研究项目，整合了：
-- **认知心理学**：REM 识别记忆模型
-- **决策科学**：贝叶斯最优整合理论
-- **社会心理学**：群体决策与协作记忆
-
-### 研究团队
-
-| 成员 | 单位 | 专长 |
-|------|------|------|
-| **Rich Shiffrin** | Indiana University | REM 模型创始人、识别记忆理论 |
-| **Tim Pleskac** | UCR | 决策建模、贝叶斯推理 |
-| **Steve Clark** | UCR | 识别记忆实验、信号检测论 |
-| **Suparna Rajaram** | Stony Brook | 协作记忆、群体抑制效应 |
-| **Yiyan (你)** | UCR | 博士生、REM 模拟实现 |
+1. [项目总览](#项目总览)
+2. [共享理论基础](#共享理论基础)
+3. [子项目分支](#子项目分支)
+   - [分支 1: Rich's Conflict Resolution Model](#分支-1-richs-conflict-resolution-model-)
+   - [分支 2: Tim's Bahrami Parameter Sweep](#分支-2-tims-bahrami-parameter-sweep-)
+   - [分支 3: IRB Protocol #29910](#分支-3-irb-protocol-29910-)
+   - [分支 4: Online Experiment System](#分支-4-online-experiment-system-)
+4. [会议记录](#会议记录)
+5. [项目管理](#项目管理)
 
 ---
+
+# 项目总览
 
 ## 核心研究问题
 
-### 主要问题
-
 **当多个个体各自拥有对同一项目的记忆证据时，群体如何整合这些证据形成集体判断？**
 
-### 子问题
-
-1. **规范性问题**：什么是"最优"的群体整合方式？（贝叶斯上限）
-2. **描述性问题**：人们实际上如何整合群体信息？
-3. **机制问题**：不同整合规则在什么条件下表现更好/更差？
+子问题：
+1. **规范性**：什么是"最优"的群体整合方式？（贝叶斯上限）
+2. **描述性**：人们实际上如何整合群体信息？
+3. **机制**：不同整合规则在什么条件下表现更好/更差？
 4. **社会因素**：信心交流、专长差异、社会压力如何影响群体判断？
+
+## 研究团队
+
+| 成员 | 单位 | 专长 | 角色 |
+|------|------|------|------|
+| **Rich Shiffrin** | Indiana University | REM 模型创始人 | 导师（模型理论） |
+| **Tim Pleskac** | UCR | 决策建模、贝叶斯推理 | 导师（群体决策） |
+| **Steve Clark** | UCR | 识别记忆实验、SDT | 实验设计顾问 |
+| **Suparna Rajaram** | Stony Brook | 协作记忆、群体抑制 | 协作记忆专家 |
+| **Yiyan (你)** | UCR | 博士生 | REM 模拟实现 |
+
+## 项目架构
+
+```
+Collective_Memory/
+│
+├── 理论基础（共享）
+│   ├── REM 模型
+│   ├── Ernst & Banks (2002) - MLE 最优整合
+│   ├── Bahrami et al. (2010) - 社会贝叶斯
+│   └── Signal Detection Theory
+│
+├── 分支 1: Rich's Model (独立) ⭐
+│   └── Conflict Resolution Model
+│       └── P = ((1+D)/(2+D))^beta
+│
+├── 分支 2: Tim's Models (独立) ⭐
+│   ├── Bahrami Parameter Sweep
+│   ├── Rich's Theory Verification
+│   └── Confidence Miscalibration
+│
+├── 分支 3: IRB (独立) 📋
+│   └── Protocol #29910 修订
+│
+└── 分支 4: Online Experiment (独立) 🌐
+    └── Firebase + React 实时多人实验
+```
+
+**重要**：分支 1 和分支 2 完全独立，各做各的模型。Rich 的模型关注冲突解决，Tim 的模型关注能力异质性和信心校准。
 
 ---
 
-## 理论框架：三条理论线索的整合
+# 共享理论基础
 
-### 线索一：REM 模型（个体层）
+所有分支共享的理论框架和术语。
+
+## REM 模型（Retrieving Effectively from Memory）
 
 **来源**：Shiffrin & Steyvers (1997)
 
-**核心机制**：REM 为每个个体、每个测试项目计算一个 **熟悉度比值（Odds）**：
+### 核心公式
 
+**熟悉度比（Odds）**：
 $$\text{Odds} = \frac{P(\text{Old} \mid D)}{P(\text{New} \mid D)}$$
 
-**完整推导公式**：
-
+**完整推导**：
 $$\frac{P(O \mid D)}{P(N \mid D)} = \frac{1}{n} \sum_{i=1}^{n} \left(\frac{c + (1-c)g}{g}\right)^{K_M^i} (1-c)^{K_N^i}$$
 
-其中：
+**参数**：
 - $K_M^i$：probe 与第 i 条记忆痕迹**匹配**的特征数
 - $K_N^i$：**不匹配**的特征数
 - $c$：学习准确度（encoding accuracy）
 - $g$：猜中特征的基础概率
 
-**关键洞见**：
+### 关键洞见
 
-> REM 的输出不是 yes/no 二值决策，而是**连续的证据强度**。
-> 这正是 WCS / DSS 能够"接上"的关键！
+> REM 的输出不是 yes/no 二值决策，而是**连续的证据强度**（log-odds）。
+> 这正是社会决策规则（WCS / DSS）能够"接上"的关键！
 
-**判断准则**：
+### 判断准则
+
 - Odds > 1 → 判断 "Old"
 - Odds < 1 → 判断 "New"
 - 准则 = 1 是 REM 推导自然给出的，**不需要人为设定**
 
+### REM 在本项目中的角色
+
+REM 只是"证据生成器"，负责产生个体层面的内部证据（log-odds），**不负责社会整合**。社会整合由各个分支的决策规则实现。
+
 ---
 
-### 线索二：Ernst & Banks (2002)（规范上限）
+## Ernst & Banks (2002) - 最优多感觉整合
 
 **来源**：Ernst, M. O., & Banks, M. S. (2002). Humans integrate visual and haptic information in a statistically optimal fashion. *Nature*, 415, 429-433.
 
-**核心理论**：跨感觉线索的最优整合方式是**按可靠性（1/方差）加权平均**。
+### 核心理论
 
-**原文公式（Maximum Likelihood Estimation）**：
+跨感觉线索的最优整合方式是**按可靠性（1/方差）加权平均**。
 
+**MLE 公式**：
 $$\hat{S} = \sum_i w_i \hat{S}_i \quad \text{where} \quad w_i = \frac{1/\sigma_i^2}{\sum_j 1/\sigma_j^2}$$
 
 **整合后方差**：
-
 $$\sigma^2_{\text{combined}} = \frac{\sigma_1^2 \sigma_2^2}{\sigma_1^2 + \sigma_2^2}$$
 
-**理论意义**：
+### 与本项目的关系
 
-> Ernst 的框架是 DSS（直接信号共享）的规范基础：
-> 如果群体成员能直接共享内部证据，最优整合方式就是可靠性加权。
+Ernst 的框架是 **DSS（Direct Signal Sharing）** 的规范基础：如果群体成员能直接共享内部证据，最优整合方式就是可靠性加权（在 REM 框架下即 log-odds 相加）。
 
 ---
 
-### 线索三：Bahrami et al. (2010)（社会贝叶斯）
+## Bahrami et al. (2010) - 社会贝叶斯决策
 
 **来源**：Bahrami, B., et al. (2010). Optimally interacting minds. *Science*, 329, 1081-1085.
 
-**核心命题**（原文）：
+### 核心命题（原文）
 
 > "These patterns can be explained by a model in which two heads are Bayes optimal under the assumption that individuals accurately communicate their level of confidence."
 
-**四种社会决策规则**：
+### 四种社会决策规则
 
 | 模型 | 全称 | 机制描述 | 与 REM 的关系 |
 |------|------|----------|---------------|
 | **CF** | Coin Flip | 分歧时随机选择 | 完全忽略 REM 证据 |
-| **UM** | Uniform/Majority | 多数投票（少数服从多数） | REM odds → 二值决策 → 投票 |
+| **UM** | Uniform/Majority | 多数投票 | REM odds → 二值决策 → 投票 |
 | **WCS** | Weighted Confidence Sharing | 按信心加权平均 | REM odds ≈ confidence |
-| **DSS** | Direct Signal Sharing | 直接整合内部证据 | REM odds 直接相乘/log相加 |
+| **DSS** | Direct Signal Sharing | 直接整合内部证据 | REM log-odds 直接相加（贝叶斯最优） |
 
-**Bahrami 的关键发现**：
+### 关键发现
 
 1. **相似性效应**：当群体成员能力相似时，群体表现最优
 2. **信心交流**：准确的信心交流是达到贝叶斯最优的关键
-3. **上限与现实**：DSS 是理论上限，但人类无法直接共享内部信号
+3. **理论上限**：DSS 是理论上限，但人类无法真正"直接共享内部信号"
 
 ---
 
-### 线索四：Enright et al. (2020)（基线模型）
+## Signal Detection Theory (SDT)
 
-**来源**：Enright, M., et al. (2020). 群体识别记忆研究（具体引用待补充）
+### 基础指标
 
-**Uniform Weighting (UW) 模型**：
+**d' (d-prime)**：敏感度
+$$d' = \Phi^{-1}(\text{HR}) - \Phi^{-1}(\text{FAR})$$
 
-$$d'_{\text{team}} = \frac{\sum_i d'_i}{\sqrt{m}}$$
+**Hautus Correction**（避免 HR=1 或 FAR=0）：
+$$\text{HR} = \frac{\text{hits} + 0.5}{S + 1}, \quad \text{FAR} = \frac{\text{fas} + 0.5}{N + 1}$$
 
-**与 REM 的对应关系**：
+### SDT 四象限
+
+| 真实 \ 判断 | 判断 "Old" | 判断 "New" |
+|-------------|-----------|-----------|
+| **真 Old** | Hit ✓ | Miss ✗ |
+| **真 New** | False Alarm ✗ | Correct Rejection ✓ |
+
+### 与 REM 的对应
 
 | SDT 概念 | REM 对应 |
 |----------|----------|
 | d' | log(Odds) 的区分度 |
-| yes/no | Odds > 1 |
-
-**理论意义**：
-
-> UM / Majority 在 REM 框架下是**必要的 baseline**，
-> 用来检验群体是否"超越简单统计聚合"。
+| yes/no decision | Odds > 1 |
 
 ---
 
-## 当前模拟任务（Current Simulation Task）
+# 子项目分支
 
-### 任务定义
+## 分支 1: Rich's Conflict Resolution Model ⭐
 
-**一句话定义（可直接用于 dissertation/proposal）**：
+**负责人**：Rich Shiffrin
+**状态**：✅ 已完成实现（2025年1月18日）
+**独立性**：与 Tim 的模型完全独立
 
-> **English**: "This simulation uses the REM model to generate individual recognition evidence (odds), and then applies alternative social decision rules (CF, UM, WCS, DSS) to map individual evidence onto group-level recognition judgments, following Bayesian and signal-detection–theoretic frameworks of collective decision-making."
+### 研究问题
 
-> **中文**: "该模拟使用 REM 模型生成个体的识别证据（熟悉度比），并在此基础上引入不同的社会决策规则（CF、UM、WCS、DSS），将个体证据映射为群体识别判断，从而检验不同群体整合机制在规范与非规范条件下的表现。"
+**当两个 agent 意见不一致时（一个说 Old，一个说 New），群体如何基于证据强度差异来决定听谁的？**
 
-### 三层模拟结构
+### 核心公式
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    第一层：个体层（REM）                   │
-├─────────────────────────────────────────────────────────┤
-│  输入：study list + test probe                           │
-│  输出：每个个体对每个 item 的 odds / λ                    │
-│  ✓ REM 只负责生成证据，不负责社会整合                      │
-└─────────────────────────────────────────────────────────┘
-                            ↓
-┌─────────────────────────────────────────────────────────┐
-│              第二层：群体规则层（Social Decision Rule）     │
-├─────────────────────────────────────────────────────────┤
-│  规则选项：CF / UM / WCS / DSS                           │
-│  输入：个体 odds 或个体决策                               │
-│  输出：群体 odds 或群体决策                               │
-└─────────────────────────────────────────────────────────┘
-                            ↓
-┌─────────────────────────────────────────────────────────┐
-│                第三层：评价层（Performance Metrics）       │
-├─────────────────────────────────────────────────────────┤
-│  分开报告：Targets（真旧词）vs Foils（真新词）             │
-│  指标：Hit Rate, FA Rate, Accuracy, d', AUC              │
-└─────────────────────────────────────────────────────────┘
-```
+#### 强度计算
 
-### 四种规则的具体实现
+1. **Log-odds → Odds**：
+   $$\phi = \exp(L)$$
 
-#### 方法一：平均熟悉度（Average the Odds）
+2. **固定幂次缩放**：
+   $$\phi' = \phi^{1/11}$$
 
-```python
-def average_odds(individual_odds):
-    """
-    把所有人的 Odds 取平均，平均值 > 1 判断 Old
-    """
-    group_odds = np.mean(individual_odds)
-    return "Old" if group_odds > 1.0 else "New"
-```
+   **注意**：1/11 是固定值，**不是**可调参数。
 
-**示例**：
-- 成员 A: Odds = 1.5
-- 成员 B: Odds = 0.8
-- 成员 C: Odds = 1.3
-- 平均 = (1.5 + 0.8 + 1.3) / 3 = 1.2 > 1.0 → **Old**
+3. **强度（Strength）**：
+   $$S = \max(\phi', 1/\phi')$$
 
-#### 方法二：多数投票（Majority Rules / UM）
+   确保 $S \geq 1$（强度总是正值）。
+
+4. **强度差异**：
+   $$D = |S_A - S_B|$$
+
+#### 决策规则
+
+**原始公式**（错误）：
+$$P_{\text{choose stronger}} = \frac{1 + D}{2 + D}$$
+
+**修正公式**（当前实现）：
+$$P_{\text{choose stronger}} = \left(\frac{1 + D}{2 + D}\right)^{\beta}$$
+
+**参数**：
+- $\beta$：默认 1.0，可调整以测试模型灵活性
+- 当 $D = 0$：$P = 0.5$（随机猜）
+- 当 $D \to \infty$：$P \to 1$（确定选择更强的）
+
+### 实现细节
+
+#### 文件位置
+
+**主文件**：`/Users/yiytan/Collective_Memory/Simulations/src/group_rules.py`
+**函数**：`rich_conflict_rule()` (Lines 455-536)
+
+#### 函数签名
 
 ```python
-def majority_vote(individual_odds):
-    """
-    每个人先做二值决策，然后多数投票
-    """
-    decisions = ["Old" if odds > 1.0 else "New" for odds in individual_odds]
-    old_votes = decisions.count("Old")
-    new_votes = decisions.count("New")
-    return "Old" if old_votes > new_votes else "New"
+def rich_conflict_rule(
+    L_A: np.ndarray,           # Agent A 的 log-odds
+    L_B: np.ndarray,           # Agent B 的 log-odds
+    labels: np.ndarray,        # 真实标签（1=Old, 0=New）
+    rng: np.random.Generator,  # 随机数生成器
+    beta: float = 1.0          # 幂次参数
+) -> dict
 ```
 
-**示例**：
-- 成员 A: Odds = 1.5 → Old
-- 成员 B: Odds = 0.8 → New
-- 成员 C: Odds = 1.3 → Old
-- 投票：2 Old vs 1 New → **Old**
+#### 返回值
 
-#### 方法三：听最自信的（Defer to Largest Odds）
-
-```python
-def defer_to_most_confident(individual_odds):
-    """
-    找 Odds 最高的人，听他的决策
-    """
-    max_odds = max(individual_odds)
-    return "Old" if max_odds > 1.0 else "New"
-```
-
-**注意**：这里有一个细微问题——如果最高 Odds 仍然 < 1，应该判断 New。
-
-#### 方法四：DSS（Direct Signal Sharing）
-
-```python
-def direct_signal_sharing(individual_odds):
-    """
-    理论上限：log-odds 相加（等价于 odds 相乘）
-    """
-    log_odds = [np.log(odds) for odds in individual_odds]
-    group_log_odds = sum(log_odds)
-    group_odds = np.exp(group_log_odds)
-    return "Old" if group_odds > 1.0 else "New"
-```
-
-**数学等价**：
-$$\text{Odds}_{\text{group}} = \prod_i \text{Odds}_i$$
-$$\log \text{Odds}_{\text{group}} = \sum_i \log \text{Odds}_i$$
-
----
-
-## 已完成的实现（2025年1月）
-
-### 实现概述
-
-成功完成了 Bahrami Parameter Sweep 模拟框架，包含三个独立的分析模块：
-
-1. **Part 1: Bahrami Parameter Sweep**（Tim's Analysis）
-   - 比较 5 种决策规则（CF, UW, DMC, DSS, BF）
-   - 固定专家能力（c_A = 0.7），扫描新手能力（c_B = 0.1 to 0.9）
-   - 核心指标：Collective Benefit Ratio = d'_team / max(d'_A, d'_B)
-
-2. **Part 2: Theoretical Verification**（Rich's Request）
-   - 验证 DSS 是否恢复 SDT 理论预测
-   - 理论上限：d'_theory = √(d'_A² + d'_B²)（正交和）
-   - 定量比较模拟 vs 理论
-
-3. **Part 3: Confidence Miscalibration**（Prelec Weighting）
-   - 研究信心校准偏差对群体决策的影响
-   - 使用 Prelec 概率权重函数
-   - 测试 4 种模型：WCS_Miscal, DMC_Miscal, DSS, CF
-
-### 核心文件
-
-#### 1. `group_rules.py`（449 行）
-
-**功能**：实现所有群体决策规则，统一返回 d' 指标
-
-**已实现的规则**（7个）：
-
-```python
-# 基础规则（5个）
-1. coin_flip_rule()           # CF - 分歧时随机
-2. uniform_weighting_rule()   # UW - 原始 odds 算术平均
-3. defer_to_max_confidence()  # DMC - 听最自信的
-4. direct_signal_sharing()    # DSS - log-odds 相加（贝叶斯最优）
-5. behavior_feedback_rule()   # BF - 基于个体正确率学习
-
-# 信心校准规则（2个）
-6. wcs_miscal_rule()          # WCS + Prelec weighting
-7. dmc_miscal_rule()          # DMC + Prelec weighting
-```
-
-**关键设计决策**：
-
-1. **UW Rule - 原始 Odds 平均**（非 log 空间）
-   ```python
-   odds_A = np.exp(L_A)
-   odds_B = np.exp(L_B)
-   mean_odds = (odds_A + odds_B) / 2
-   team_decision = (mean_odds > 1).astype(int)
-   ```
-
-2. **BF Rule - 个体学习**（CRITICAL）
-   - 分数更新基于**个体正确性**，非群体决策正确性
-   - Trial-by-trial 顺序处理
-   ```python
-   if D_A[i] == labels[i]: score_A += 1
-   if D_B[i] == labels[i]: score_B += 1
-   ```
-
-3. **Prelec Weighting Function**
-   ```python
-   def prelec_weighting(L, alpha):
-       p = 1.0 / (1.0 + np.exp(-L))  # sigmoid
-       beta = np.power(np.log(2), 1 - alpha)  # 确保 w(0.5) = 0.5
-       w = np.exp(-beta * np.power(-np.log(p), alpha))
-       return w
-   ```
-
-4. **DMC Miscalibration - 信心定义**
-   - 信心 = 距离中点的距离：`conf = |w - 0.5|`（非原始 w）
-
-**统一返回格式**：
 ```python
 {
     'dprime_A': float,
     'dprime_B': float,
-    'dprime_team': float
+    'dprime_team': float,
+    'decisions': np.ndarray,      # 团队决策数组
+    'conflict_mask': np.ndarray,  # 冲突试次标记
+    'strength_A': np.ndarray,     # Agent A 的强度
+    'strength_B': np.ndarray,     # Agent B 的强度
+    'D_values': np.ndarray        # 强度差异值
 }
 ```
 
-#### 2. `run_simulation.py`（576 行）
+#### 关键实现细节
 
-**功能**：三个独立的参数扫描函数 + 可视化
-
-**主要函数**：
-
+**冲突定义**：
 ```python
-1. run_bahrami_sweep()
-   - 固定：c_A = 0.7
-   - 扫描：c_B ∈ [0.1, 0.9], step 0.1
-   - 规则：CF, UW, DMC, DSS, BF
-   - 输出：bahrami_sweep_final.csv, bahrami_sweep_plot.png
-
-2. run_miscalibration_sweep()
-   - 固定：c_A = c_B = 0.7, alpha_A = 1.2
-   - 扫描：alpha_B ∈ [0.5, 1.5], step 0.1
-   - 规则：WCS_Miscal, DMC_Miscal, DSS, CF
-   - 输出：miscalibration_sweep.csv, miscalibration_plot.png
-
-3. create_bahrami_plot()
-   - 5条曲线 + y=1.0 参考线
-   - X轴：Agent B Ability (c_B)
-   - Y轴：Collective Benefit Ratio
-
-4. create_rich_verification_plot()
-   - DSS (simulated) vs Theory 对比
-   - 左图：d'_team 绝对值
-   - 右图：Collective Benefit Ratio
-
-5. create_miscalibration_plot()
-   - 4条曲线（2 miscal + 2 baseline）
-   - X轴：Agent B Miscalibration (α_B)
-   - Y轴：Collective Benefit Ratio
+conflict_mask = (D_A != D_B)  # 一个说 Old，一个说 New
 ```
 
-**关键设计**：
-- 每个扫描独立初始化 RNGs（确保条件间独立）
-- REM 参数固定：w=20, g=0.4, u=0.04, nSteps=5
-- 使用 Hautus correction 计算 d'
+**强度计算**：
+```python
+odds_A = np.exp(L_A)
+phi_scaled_A = np.power(odds_A, 1/11)  # 固定 1/11
+S_A = np.maximum(phi_scaled_A, 1/phi_scaled_A)
+```
 
-#### 3. `bahrami_sweep_demo.ipynb`
+**概率计算**：
+```python
+P_choose_stronger = np.power((1.0 + D) / (2.0 + D), beta)
+```
 
-**功能**：Jupyter notebook 包装器，三个独立分析部分
+### 验证实验
 
-**结构**：
-- **Part 1**：运行 Bahrami sweep，展示 5 规则比较
-- **Part 2**：展示 Rich's 理论验证（DSS vs SDT prediction）
-- **Part 3**：运行 miscalibration sweep，分析 Prelec weighting 效应
+**文件**：`/Users/yiytan/Collective_Memory/Simulations/src/run_simulation.py`
+**函数**：`run_rich_conflict_simulation(beta=1.0)` (Lines 582-745)
 
-**每部分独立**：
-- 使用不同变量名（`results`, `results_miscal`）
-- 避免交叉污染
-- 独立的可视化输出
+**输出**：
+- `rich_conflict_results.csv`：冲突试次的经验概率 vs 理论预测
+- `rich_conflict_plot.png`：散点图 + 理论曲线
 
-### 理论创新点
+**验证目标**：
+- 经验概率（模拟）是否匹配理论公式
+- Beta 参数是否按预期影响曲线形状
 
-#### 1. Prelec 概率权重函数
+### 与 Tim 模型的区别
 
-**数学形式**：
+| 维度 | Rich's Model | Tim's Model |
+|------|-------------|-------------|
+| 关注点 | 冲突解决（disagree 时听谁的） | 能力异质性对群体增益的影响 |
+| 核心指标 | P(choose stronger \| conflict) | Collective Benefit Ratio |
+| 分析对象 | **仅冲突试次** | 所有试次 |
+| 独立性 | 完全独立分析 | 扫描参数空间 |
+
+### 使用示例
+
+```python
+from src import group_rules
+import numpy as np
+
+# 生成模拟数据
+L_A = np.random.randn(100)
+L_B = np.random.randn(100)
+labels = np.random.randint(0, 2, 100)
+rng = np.random.default_rng(42)
+
+# 运行 Rich's 模型
+result = group_rules.rich_conflict_rule(L_A, L_B, labels, rng, beta=1.0)
+
+# 查看冲突试次比例
+print(f"Conflict trials: {np.sum(result['conflict_mask'])}")
+
+# 查看平均强度差异
+print(f"Mean D: {np.mean(result['D_values'][result['conflict_mask']])}")
+```
+
+---
+
+## 分支 2: Tim's Bahrami Parameter Sweep ⭐
+
+**负责人**：Tim Pleskac
+**状态**：✅ 已完成实现（2025年1月18日）
+**独立性**：与 Rich 的模型完全独立
+
+### 研究问题
+
+**群体成员能力异质性（ability heterogeneity）如何影响不同决策规则下的群体表现？**
+
+### 三个分析模块
+
+#### 模块 1: Bahrami Parameter Sweep
+
+**目标**：比较 5 种决策规则在不同能力组合下的表现
+
+**实验设计**：
+- 固定：Agent A 能力 $c_A = 0.7$（专家）
+- 扫描：Agent B 能力 $c_B \in [0.1, 0.9]$，步长 0.1
+- 规则：CF, UW, DMC, DSS, BF
+
+**核心指标**：
+$$\text{CBR} = \frac{d'_{\text{team}}}{\max(d'_A, d'_B)}$$
+
+- CBR > 1：群体优于最佳个体（集体增益）
+- CBR = 1：群体等于最佳个体
+- CBR < 1：群体劣于最佳个体（集体损失）
+
+**输出**：
+- `bahrami_sweep_final.csv`：45 行（9 c_B × 5 rules）
+- `bahrami_sweep_plot.png`：5 条曲线对比图
+
+#### 模块 2: Rich's Theory Verification
+
+**目标**：验证 DSS 是否达到 SDT 理论上限
+
+**理论预测**（独立噪声假设）：
+$$d'_{\text{optimal}} = \sqrt{d'_A^2 + d'_B^2}$$
+
+**验证**：
+- 对比 DSS 模拟结果 vs 理论公式
+- 定量测量偏差：$|d'_{\text{DSS}} - d'_{\text{theory}}|$
+
+**输出**：
+- `rich_theory_verification.png`：左图 d' 绝对值，右图 CBR
+
+**注意**：这里的 "Rich's verification" 是验证 **DSS 的数学推导**，与分支 1 的 "Rich's conflict model" 无关。
+
+#### 模块 3: Confidence Miscalibration
+
+**目标**：研究信心校准偏差（confidence miscalibration）对群体决策的影响
+
+**实验设计**：
+- 固定：$c_A = c_B = 0.7$，$\alpha_A = 1.2$（A 过度自信）
+- 扫描：$\alpha_B \in [0.5, 1.5]$，步长 0.1
+- 规则：UW_Miscal, DMC_Miscal, DSS, CF
+
+**重要**：UW_Miscal 是 UW + Prelec，不是 Bahrami 的 WCS。命名反映 Tim 的模型语义。
+
+**Prelec 概率权重函数**：
 $$w(p) = \exp(-\beta \cdot (-\ln p)^\alpha)$$
 
 **约束条件**：
 $$\beta = (\ln 2)^{1-\alpha} \quad \Rightarrow \quad w(0.5) = 0.5$$
 
 **参数解释**：
-- α = 1：完美校准（w = p）
-- α > 1：过度自信（极端值被夸大）
-- α < 1：不够自信（极端值被压缩）
+- $\alpha = 1$：完美校准（$w = p$）
+- $\alpha > 1$：过度自信（极端值被夸大）
+- $\alpha < 1$：不够自信（极端值被压缩）
 
-**实现细节**（LOCKED SEMANTICS）：
-1. 输入：Log-odds L（非概率）
-2. 转换：p = 1/(1 + exp(-L))
-3. 应用 Prelec：w(p)
-4. 返回：主观权重 w ∈ (0,1)
+**输出**：
+- `miscalibration_sweep.csv`：44 行（11 α_B × 4 models）
+- `miscalibration_plot.png`：4 条曲线对比图（UW_Miscal, DMC_Miscal, DSS, CF）
 
-#### 2. 正交和理论（Orthogonal Sum）
+### 实现细节
 
-**SDT 预测**（独立噪声假设）：
-$$d'_{\text{optimal}} = \sqrt{d'_A^2 + d'_B^2}$$
+#### 文件位置
 
-**验证目标**：
-- 检验 DSS（REM 模拟）是否恢复该上限
-- 定量测量偏差：|d'_DSS - d'_theory|
+**核心文件**：
+- `/Users/yiytan/Collective_Memory/Simulations/src/group_rules.py`（7 个规则函数）
+- `/Users/yiytan/Collective_Memory/Simulations/src/run_simulation.py`（3 个扫描函数）
+- `/Users/yiytan/Collective_Memory/Simulations/notebooks/bahrami_sweep_demo.ipynb`（Jupyter 包装器）
 
-#### 3. Collective Benefit Ratio
+#### 7 个群体决策规则
 
-**定义**：
-$$\text{CBR} = \frac{d'_{\text{team}}}{max(d'_A, d'_B)}$$
+**基础规则**（5 个）：
 
-**解释**：
-- CBR > 1：群体优于最佳个体（集体增益）
-- CBR = 1：群体等于最佳个体
-- CBR < 1：群体劣于最佳个体（集体损失）
+1. **CF (Coin Flip)**：
+   ```python
+   # 分歧时随机选择
+   if D_A != D_B:
+       D_team = rng.choice([D_A, D_B])
+   else:
+       D_team = D_A
+   ```
 
-### 实验设计矩阵
+2. **UW (Uniform Weighting)**：
+   ```python
+   # 原始 odds 算术平均（非 log 空间！）
+   odds_A = np.exp(L_A)
+   odds_B = np.exp(L_B)
+   mean_odds = (odds_A + odds_B) / 2
+   D_team = (mean_odds > 1).astype(int)
+   ```
 
-| 实验 | 固定参数 | 扫描参数 | 测试规则 | 研究问题 |
-|------|----------|----------|----------|----------|
-| Bahrami Sweep | c_A = 0.7 | c_B ∈ [0.1, 0.9] | CF, UW, DMC, DSS, BF | 能力异质性如何影响群体增益？ |
-| Rich Verification | c_A = 0.7 | c_B ∈ [0.1, 0.9] | DSS only | DSS 是否达到理论上限？ |
-| Miscalibration | c_A = c_B = 0.7, α_A = 1.2 | α_B ∈ [0.5, 1.5] | WCS_Miscal, DMC_Miscal, DSS, CF | 信心校准偏差如何影响整合？ |
+3. **DMC (Defer to Max Confidence)**：
+   ```python
+   # 听信心最大的人
+   conf_A = np.abs(L_A)
+   conf_B = np.abs(L_B)
+   D_team = np.where(conf_A > conf_B, D_A, D_B)
+   ```
 
-### 输出文件
+4. **DSS (Direct Signal Sharing)**：
+   ```python
+   # log-odds 相加（贝叶斯最优）
+   L_team = L_A + L_B
+   D_team = (L_team > 0).astype(int)
+   ```
 
+5. **BF (Behavior & Feedback)**：
+   ```python
+   # 基于个体正确率学习（trial-by-trial）
+   # CRITICAL: 更新基于个体正确性，非群体决策正确性
+   for i in range(n):
+       if D_A[i] == labels[i]: score_A += 1
+       if D_B[i] == labels[i]: score_B += 1
+       D_team[i] = D_A[i] if score_A >= score_B else D_B[i]
+   ```
+
+**信心校准规则**（2 个）：
+
+6. **UW_Miscal**（原 WCS_Miscal）：
+   ```python
+   # UW + Prelec weighting（算术平均 w，不是信心加权）
+   w_A = prelec_weighting(L_A, alpha_A)
+   w_B = prelec_weighting(L_B, alpha_B)
+   w_team = (w_A + w_B) / 2  # 简单算术平均
+   D_team = (w_team > 0.5).astype(int)  # 严格大于
+   ```
+
+7. **DMC_Miscal**：
+   ```python
+   # DMC + Prelec weighting（选择 max |w - 0.5|）
+   w_A = prelec_weighting(L_A, alpha_A)
+   w_B = prelec_weighting(L_B, alpha_B)
+   conf_A = np.abs(w_A - 0.5)  # 距离中点的距离
+   conf_B = np.abs(w_B - 0.5)
+   D_team = np.where(conf_A > conf_B, D_A, D_B)
+   ```
+
+#### 关键设计决策
+
+**1. UW 必须用原始 Odds**（非 log 空间）：
+```python
+# CORRECT
+mean_odds = (np.exp(L_A) + np.exp(L_B)) / 2
+
+# WRONG
+mean_log_odds = (L_A + L_B) / 2  # 这是 DSS!
 ```
-Simulations/
-├── bahrami_sweep_final.csv       # 45 rows (9 c_B × 5 rules)
-│   └── Columns: c_A, c_B, rule, dprime_A, dprime_B, dprime_team,
-│                d_best, collective_benefit_ratio, dprime_theory, ratio_theory
-│
-├── miscalibration_sweep.csv      # 44 rows (11 α_B × 4 models)
-│   └── Columns: alpha_A, alpha_B, model, dprime_A, dprime_B, dprime_team,
-│                d_best, collective_benefit_ratio
-│
-├── bahrami_sweep_plot.png        # 5-curve comparison
-├── rich_theory_verification.png  # DSS vs theory (2 subplots)
-└── miscalibration_plot.png       # 4-model comparison
-```
 
-### 关键技术细节
+**2. BF 更新机制**（CRITICAL）：
+- 分数更新基于**个体正确性**
+- 不是基于群体决策正确性
+- Trial-by-trial 顺序处理
+
+**3. Prelec 约束**：
+$$\beta = (\ln 2)^{1-\alpha}$$
+确保 $w(0.5) = 0.5$（交叉点不变）。
+
+**4. DMC_Miscal 信心定义**：
+```python
+conf = |w - 0.5|  # 距离中点的距离
+```
+不是直接用 $w$ 作为信心。
 
 #### RNG 独立性策略
 
@@ -459,12 +510,47 @@ for idx, condition in enumerate(conditions):
     rng_cf = np.random.default_rng(condition_seed + 3000)
 ```
 
-#### D' 计算（Hautus Correction）
+**设计原理**：
+- 每个参数点独立初始化 RNGs
+- Agent A 和 B 使用不同 seed（+1000, +2000）
+- 刺激列表共享（rng_test），确保两人看到相同项目
 
+### 使用示例
+
+```bash
+# 进入模拟目录
+cd /Users/yiytan/Collective_Memory/Simulations/
+
+# 运行完整扫描（Python 脚本）
+python run_simulation.py
+
+# 或使用 Jupyter Notebook
+jupyter notebook bahrami_sweep_demo.ipynb
+```
+
+**交互式运行**：
 ```python
-HR = (hits + 0.5) / (S + 1)
-FAR = (fas + 0.5) / (N + 1)
-dprime = stats.norm.ppf(HR) - stats.norm.ppf(FAR)
+import run_simulation
+
+# 运行 Bahrami sweep
+df_bahrami = run_simulation.run_bahrami_sweep()
+
+# 运行 miscalibration sweep
+df_miscal = run_simulation.run_miscalibration_sweep()
+
+# 查看结果
+print(df_bahrami.groupby('rule')['collective_benefit_ratio'].mean())
+```
+
+### 输出文件
+
+```
+Simulations/outputs/
+├── bahrami_sweep_final.csv          # 45 rows (9 c_B × 5 rules)
+├── miscalibration_sweep.csv         # 44 rows (11 α_B × 4 models)
+├── bahrami_sweep_plot.png           # 5-curve comparison
+├── rich_theory_verification.png     # DSS vs theory (2 subplots)
+└── miscalibration_plot.png          # 4-model comparison
 ```
 
 ### 验证清单
@@ -476,47 +562,476 @@ dprime = stats.norm.ppf(HR) - stats.norm.ppf(FAR)
 - ✅ 所有规则返回 d' 指标
 - ✅ Bahrami sweep 生成 45 行（9 × 5）
 - ✅ Prelec beta 确保 w(0.5) = 0.5
+- ✅ UW_Miscal 使用简单算术平均 w（不是信心加权）
 - ✅ DMC_Miscal 使用 |w - 0.5| 作为信心
 - ✅ 三个分析部分完全独立
 - ✅ CSV 包含所有必需列
+- ✅ traces 在循环内生成（Monte Carlo 活跃）
+- ✅ test_items 在循环外生成（固定考试）
 
 ---
 
-## 导师指导记录
+## 分支 3: IRB Protocol #29910 📋
 
-### Tim Pleskac 的邮件（模型空间）
+**负责人**：Yiyan（你）
+**状态**：✅ 已提交修订（2025年1月19日）
+**独立性**：完全独立的行政任务
 
-Tim 建议系统比较以下模型：
+### 背景
 
-> "I think it is worth considering the Bahrami models in particular the WCS and DSS models and formulate them with REM."
+IRB Protocol #29910 提交后收到反馈，要求修订多个文档以解决一致性和细节问题。
 
-具体规则定义：
-1. **CF (Coin Flip)**：分歧时随机
-2. **BF (Behavior & Feedback)**：根据历史正确率决定听谁的
-3. **WCS (Weighted Confidence Sharing)**：按信心加权
-4. **DSS (Direct Signal Sharing)**：直接整合内部证据（理论上限）
+### 核心策略：Umbrella Protocol
 
-### Rich Shiffrin 的邮件（方法论约束）
+**目标**：让 IRB 批准一个通用框架，具体实验可以在框架内灵活调整。
 
-Rich 的关键判断：
+**原则**：
+> "只要 IRB 没问的，你就不要写那么清楚"
 
-> "BF needs analysis as testing continues, and involves output interference (OI). If we use a model without OI then what is learned will not likely be interpretable..."
+具体实现：
+1. ✅ **只回答 IRB 明确问到的问题**
+2. ❌ **不要过度详细化实验设计**
+3. ✅ **保持程序描述的通用性**
+4. ❌ **不要把实验"写死"**
 
-**Rich 的指令解读**：
+### 修订内容
 
-| 现在做 | 暂时不做 |
-|--------|----------|
-| ✅ CF / UM / WCS / DSS 静态规则比较 | ❌ Output Interference (OI) |
-| ✅ 用 REM 生成个体证据 | ❌ Behavior & Feedback (BF) 学习 |
-| ✅ 分开报告 Targets vs Foils | ❌ 跨 trial 的动态变化 |
+#### 网页问答（3个问题）
 
-**原因**：OI 会导致识别性能随测试下降，BF 会导致性能上升，两者不分开会导致解释混乱。
+**Question 0812: Research Procedures**
+- 说明时长：20 分钟
+- 描述两个主要阶段：Individual + Collaborative
+- 说明在线协作的方式（不详细到具体参数）
+- 强调两个平台（Prolific vs SONA）程序相同
+
+**Question 0813: Identifiable Information**
+- Answer: No
+- 说明只收集 ID 用于补偿，48小时内移除
+
+**Question 0818: Payment Arrangement**
+- Prolific: $3.50
+- SONA: 0.5 学分 + 替代方式（写短文）
+
+#### 修订文档（6个）
+
+**文件位置**：`/Users/yiytan/Collective_Memory/IRB/`
+
+生成的文件（带 `_REVISED` 后缀）：
+1. `#29910- SIS_Prolific_REVISED.docx`
+2. `#29910- SIS_SONA_REVISED.docx`
+3. `#29910- Recruitment_Ad_Prolific_REVISED.docx`
+4. `#29910- Recruitment_Ad_SONA_REVISED.docx`
+5. `#29910- INST_Prolific_REVISED.docx` ⚠️ 需要添加刺激
+6. `#29910- INST_SONA_REVISED.docx` ⚠️ 需要添加刺激
+
+**INST 文件的特殊处理**：
+- 添加明确的占位符：`[USER TO ADD STIMULI HERE]`
+- 提供示例格式（但不填入实际内容）
+- 分为两个部分：Study Phase Stimuli + Test Phase Stimuli
+
+### 关键经验
+
+#### IRB 问答的艺术
+
+| IRB 问题 | 过度详细（❌） | 恰当（✅） |
+|---------|--------------|----------|
+| How long? | "5 phases: Setup (1 min), Study (5 min), Test (7 min)..." | "Approximately 20 minutes" |
+| What procedures? | "50 words, 4 seconds each, 100 test trials..." | "View stimuli, complete memory test, may collaborate online" |
+| How collaborate? | "Custom chat interface, 500 char limit..." | "See others' responses, view statistics, optionally discuss via text" |
+
+#### 有用的模板短语
+
+**时间描述**：
+- "approximately 20 minutes"
+- "will vary among participants"
+- "on average"
+
+**程序描述**：
+- "such as"
+- "may include"
+- "participants can optionally"
+- "if they choose to"
+
+**灵活表述**：
+- "a series of stimuli (e.g., words or images)"
+- "various memory test formats"
+- "different types of collaboration"
+
+**避免使用**：
+- 精确数字（"exactly 50 items"）
+- 固定时间（"Study Phase - 5 minutes"）
+- 绝对语句（"all participants will"）
+
+### 一致性检查清单
+
+- ✅ 所有文档的时间都是 20 分钟
+- ✅ Prolific 支付金额一致（$3.50）
+- ✅ SONA 学分一致（0.5 credit）
+- ✅ SONA 包含 alternative credit 选项
+- ✅ Prolific 和 SONA 的程序描述相同
+- ✅ INST 文件包含实际材料的占位符
+- ✅ 所有 SIS 都提到数据去标识化（48小时内）
+
+### 下次修订 IRB 的快速检查表
+
+1. ☐ 阅读所有 IRB feedback PDF
+2. ☐ 列出所有 Action Items
+3. ☐ 向用户确认关键参数（时间、补偿、程序）
+4. ☐ 询问是否需要保持灵活性（Umbrella protocol?）
+5. ☐ 生成网页问答答案（简洁版）
+6. ☐ 生成修订后的文档（_REVISED 版本）
+7. ☐ 一致性检查（时间、金额、程序描述）
+8. ☐ 创建使用说明文件
+9. ☐ 告知用户哪里需要手动添加内容
 
 ---
 
-## 会议记录摘要（2024年12月）
+## 分支 4: Online Experiment System 🌐
 
-### 会议参与者
+**负责人**：Yiyan（你）
+**状态**：✅ 已部署（2025年1月）
+**独立性**：纯工程实现，独立于模拟分支
+
+### 项目位置
+
+`/Users/yiytan/memory-game`
+
+**部署地址**：https://collective-memory-d3802.web.app
+**Firebase 控制台**：https://console.firebase.google.com/project/collective-memory-d3802/overview
+
+### 技术架构
+
+```
+Frontend:
+  - React 19.2.0 (Create React App)
+  - Lucide React (图标库)
+  - CSS-in-JS (inline styles)
+
+Backend:
+  - Firebase Firestore (实时数据库)
+  - Firebase Authentication (匿名登录)
+  - Firebase Hosting (部署)
+
+Build & Deploy:
+  - npm run build → /build 目录
+  - firebase deploy → Hosting
+```
+
+### 实验流程
+
+```
+1. Login & Matchmaking
+   ↓
+2. Lobby Wait (等待其他被试加入)
+   ↓
+3. Study Phase (学习单词，所有人看相同材料)
+   ↓
+4. Test Phase
+   ├─ Step 1: Individual Decision (独立判断 Old/New + 信心评分)
+   └─ Step 2: Group Discussion (圆桌视图 + 文字讨论 + 修改决策)
+   ↓
+5. Results (完成界面 + Completion Code)
+```
+
+### 关键参数配置
+
+**位置**：`src/App.js` Lines 35-39
+
+```javascript
+const DEBUG_MODE = true;  // 调试模式（单人测试）
+const TARGET_GROUP_SIZE = DEBUG_MODE ? 1 : 3;  // 群体大小
+const AUTO_START_DELAY = DEBUG_MODE ? 2 : 5;   // 自动开始延迟（秒）
+const STUDY_WORD_DURATION = DEBUG_MODE ? 1000 : 2000;  // 单词显示时长（ms）
+const STUDY_GAP_DURATION = DEBUG_MODE ? 500 : 500;     // 间隔时长（ms）
+```
+
+**重要**：部署到正式实验前，将 `DEBUG_MODE` 改为 `false`。
+
+### Firestore 数据结构
+
+**Document 路径**：`experiments/auto_room_{roomId}`
+
+```javascript
+{
+  // 房间信息
+  roomId: string,
+  hostId: string,
+  status: 'lobby' | 'study' | 'test' | 'finished',
+
+  // 参与者
+  players: {
+    [uid]: { name, oderId, joinedAt }
+  },
+
+  // 实验材料
+  testList: [{ word, type: 'target'|'lure' }],
+
+  // 响应数据
+  responses: {
+    [trialIndex]: {
+      [userId]: {
+        initial: {
+          decision: 'old'|'new',
+          confidence: 1-5,
+          rt: number,
+          isCorrect: boolean,
+          sdtCategory: 'hit'|'miss'|'false_alarm'|'correct_rejection',
+          ...
+        },
+        final: {...}  // 群体讨论后的决策
+      }
+    }
+  },
+
+  // 聊天消息
+  chatMessages: {
+    [trialIndex]: [
+      { oderId, name, message, timestamp }
+    ]
+  }
+}
+```
+
+### 响应数据格式（心理学实验标准）
+
+```javascript
+{
+  // 核心响应
+  decision: 'old' | 'new',
+  confidence: 1-5,
+  rt: number,               // Reaction Time (ms)
+  timestamp: number,
+  timeElapsed: number,      // 从测试阶段开始的累计时间
+
+  // 刺激信息
+  stimulus: string,
+  stimulusType: 'target' | 'lure',
+  isOld: boolean,
+
+  // 准确性
+  isCorrect: boolean,
+  sdtCategory: 'hit' | 'miss' | 'false_alarm' | 'correct_rejection',
+
+  // 试次信息
+  trialIndex: number,
+  step: 1 | 2,              // 个体/群体阶段
+
+  // 参与者信息
+  oderId: string
+}
+```
+
+### 开发和部署工作流
+
+#### 本地开发
+
+```bash
+cd /Users/yiytan/memory-game
+npm install  # 首次
+npm start    # 启动开发服务器，访问 localhost:3000
+```
+
+#### 部署到 Firebase
+
+```bash
+npm run build      # 构建生产版本 → /build 目录
+firebase deploy    # 部署到 Hosting
+```
+
+#### Firebase CLI 配置
+
+```bash
+firebase login            # 首次部署需登录
+firebase init hosting     # 初始化配置
+```
+
+### 常见修改场景
+
+#### 1. 修改实验材料
+
+**位置**：`src/App.js` Lines 60-67
+
+```javascript
+const TARGET_WORDS = [
+  "Cat", "Book", "Tree", ...  // 你的单词
+];
+const LURE_WORDS = [
+  "Dog", "Pen", "Flower", ...  // 你的干扰词
+];
+```
+
+#### 2. 调整时间参数
+
+**位置**：`src/App.js` Lines 35-39
+
+```javascript
+const STUDY_WORD_DURATION = 3000;  // 改为 3 秒
+const STUDY_GAP_DURATION = 1000;   // 改为 1 秒间隔
+```
+
+#### 3. 切换到正式实验模式
+
+**位置**：`src/App.js` Line 35
+
+```javascript
+const DEBUG_MODE = false;  // 关闭调试模式
+```
+
+**效果**：
+- 需要完整的组才能开始
+- 测试阶段包含两个步骤（个体 + 群体）
+- 恢复正常的时间参数
+
+### 数据导出和分析
+
+#### 方法 1：Firebase Console（手动）
+
+访问：https://console.firebase.google.com/project/collective-memory-d3802/firestore
+Collection: `experiments`
+
+#### 方法 2：Firebase Admin SDK（推荐）
+
+```javascript
+// data_export.js
+const admin = require('firebase-admin');
+const fs = require('fs');
+
+admin.initializeApp({
+  credential: admin.credential.applicationDefault(),
+  projectId: 'collective-memory-d3802'
+});
+
+const db = admin.firestore();
+
+async function exportData() {
+  const snapshot = await db.collection('experiments').get();
+  const data = snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  }));
+
+  fs.writeFileSync('experiment_data.json', JSON.stringify(data, null, 2));
+}
+
+exportData();
+```
+
+#### Python 数据处理示例
+
+```python
+import json
+import pandas as pd
+
+# 读取导出的数据
+with open('experiment_data.json') as f:
+    rooms = json.load(f)
+
+# 提取所有响应数据
+all_responses = []
+for room in rooms:
+    room_id = room['roomId']
+    players = room['players']
+    responses = room.get('responses', {})
+
+    for trial_idx, trial_data in responses.items():
+        for user_id, user_responses in trial_data.items():
+            # 个体阶段
+            if 'initial' in user_responses:
+                initial = user_responses['initial']
+                all_responses.append({
+                    'room_id': room_id,
+                    'user_id': user_id,
+                    'participant_name': players[user_id]['name'],
+                    'trial': trial_idx,
+                    'phase': 'individual',
+                    'decision': initial['decision'],
+                    'confidence': initial['confidence'],
+                    'rt': initial['rt'],
+                    'is_correct': initial['isCorrect'],
+                    'sdt_category': initial['sdtCategory']
+                })
+
+            # 群体阶段
+            if 'final' in user_responses:
+                final = user_responses['final']
+                all_responses.append({...})  # 类似结构
+
+df = pd.DataFrame(all_responses)
+df.to_csv('analysis_ready_data.csv', index=False)
+```
+
+### 与 REM 模拟的关系
+
+**当前 Demo**：
+- 纯行为实验
+- 记录 decision (Old/New) 和 confidence
+- 适合测试群体决策规则（Majority, WCS 等）
+
+**未来整合 REM**：
+1. 在服务器端运行 REM 模拟生成 log-odds
+2. 用 REM 输出替代真实被试的部分角色（confederate agents）
+3. 分析真实数据后用 REM 拟合参数
+
+**数据对应**：
+- Decision (Old/New) ↔ REM: Odds > 1
+- Confidence (1-5) ↔ REM: |log(Odds)|
+- Group decision ↔ REM + Social rules (DSS, WCS, etc.)
+
+### 快速上手（下次启动时）
+
+```bash
+# 1. 本地测试
+cd /Users/yiytan/memory-game
+npm start
+# 打开 localhost:3000，输入 Participant ID，开始测试
+
+# 2. 修改材料/参数
+# 编辑 src/App.js 第 35-67 行，保存后自动刷新
+
+# 3. 部署到线上
+npm run build
+firebase deploy
+# 访问 https://collective-memory-d3802.web.app
+
+# 4. 查看数据
+# Firebase Console → Firestore → experiments collection
+```
+
+**忘记功能在哪？搜索关键词**：
+- `handleManualJoin` - 匹配机制
+- `StudyPhase` - 学习阶段
+- `TestPhase` - 测试阶段
+- `handleSubmit` - 提交响应
+- `sendChatMessage` - 聊天功能
+
+### 文件结构
+
+```
+/Users/yiytan/memory-game/
+├── src/
+│   ├── App.js         # ⭐ 核心实验逻辑（1481 行）
+│   ├── index.js       # React 入口
+│   └── ...
+├── build/             # 生产构建输出
+├── package.json       # 项目配置
+├── firebase.json      # Firebase Hosting 配置
+└── .firebaserc        # Firebase 项目关联
+```
+
+### 重要提醒
+
+1. **不要修改原始文件**：始终在 Git 管理下工作
+2. **调试模式开关**：部署前确认 `DEBUG_MODE = false`
+3. **Firebase 用量**：Firestore 免费额度有限，大规模测试前检查配额
+4. **数据备份**：定期从 Firestore 导出数据到本地
+
+---
+
+# 会议记录
+
+## 2024年12月大会议
+
+### 参与者
 
 - Rich Shiffrin（Indiana）
 - Tim Pleskac（UCR）
@@ -608,298 +1123,429 @@ Rich 的关键判断：
 
 1. **下一步**：每人提出实验设计建议，放入共享 Google Doc
 2. **研究方向**：从"是否有群体增益"转向"人们如何使用社会信息"
-3. **方法论**：先做静态规则比较，暂不做学习和 OI
+3. **方法论**：先做静态规则比较，暂不做学习和 Output Interference
+
+### 各参与者观点与性格
+
+**Rich Shiffrin**：
+- 审慎，不轻易相信直觉，坚持用模拟验证
+- 系统性，强调一次只改变一个因素
+- 开放，愿意改变研究方向
+
+**Tim Pleskac**：
+- 理论驱动，总是从模型预测出发
+- 桥梁角色，连接不同领域
+- 务实，关注"下一步做什么"
+
+**Steve Clark**：
+- 实验主义者，亲自运行实验、观察被试
+- 细节导向，注意到信心校准的社会动态
+- 创新，提出"分开学习、一起测试"的设计
+
+**Suparna Rajaram**：
+- 综合者，能把不同观点整合成连贯框架
+- 好奇，想知道"人们到底在做什么"
+- 社会敏感，注意到"不想显得像混蛋"的社会因素
 
 ---
 
-## 各参与者观点与性格分析
-
-### Rich Shiffrin
-
-**观点**：
-- 强调 REM 的长尾分布使直觉预测变得困难
-- 关注个体差异的巨大影响
-- 建议暂时搁置复杂因素（OI、BF），先做简单模型
-- 对"社会因素如何影响记忆决策"比"是否有群体增益"更感兴趣
-
-**性格特点**：
-- **审慎**：不轻易相信直觉，坚持用模拟验证
-- **系统性**：强调一次只改变一个因素
-- **开放**：愿意改变研究方向（从效应检测到机制探索）
-- **幽默**：称 Yiyan 为"沉默的成员"
-
-### Tim Pleskac
-
-**观点**：
-- 强调不同决策规则（Bahrami 模型）的理论区分
-- 关注 REM 如何与社会决策模型整合
-- 提出用认知模型预测信心（而不是直接测量）
-
-**性格特点**：
-- **理论驱动**：总是从模型预测出发
-- **桥梁角色**：连接不同领域（决策科学 + 记忆）
-- **务实**：关注"下一步做什么"
-- **支持性**：帮助 Yiyan 联系导师、发送视频
-
-### Steve Clark
-
-**观点**：
-- 提供实验细节和被试行为观察
-- 提出创新的预曝光实验设计
-- 发现信心评分可能使任务"过于简单"
-
-**性格特点**：
-- **实验主义者**：亲自运行实验、观察被试
-- **细节导向**：注意到信心校准的社会动态
-- **创新**：提出"分开学习、一起测试"的设计
-- **实用**：关注实验的"面效度"
-
-### Suparna Rajaram
-
-**观点**：
-- 从协作抑制文献出发理解群体效应
-- 强调"under the hood"的机制问题
-- 建议操纵记忆强度（而不只是信心）
-- 关注社会压力对判断的影响
-
-**性格特点**：
-- **综合者**：能把不同观点整合成连贯框架
-- **好奇**：想知道"人们到底在做什么"
-- **社会敏感**：注意到"不想显得像混蛋"的社会因素
-- **高效**：会议密集但仍参与讨论
-
----
+# 项目管理
 
 ## 项目文件结构
 
 ```
 Collective_Memory/
-├── CLAUDE.md                          # 本文档（项目知识库）
-├── papers/                            # 相关论文 PDF
+├── CLAUDE.md                         # 本文档（项目知识库）
+│
+├── Simulations/                      # 分支 1 & 2: REM 模拟
+│   ├── src/
+│   │   ├── rem_core.py              # REM 引擎（READ-ONLY）
+│   │   ├── group_rules.py           # 7 种群体决策规则
+│   │   └── run_simulation.py        # 参数扫描主程序
+│   ├── notebooks/
+│   │   └── bahrami_sweep_demo.ipynb # Jupyter 包装器
+│   └── outputs/
+│       ├── bahrami_sweep_final.csv
+│       ├── miscalibration_sweep.csv
+│       ├── rich_conflict_results.csv
+│       └── *.png                     # 可视化图表
+│
+├── IRB/                              # 分支 3: IRB 文档
+│   ├── Protocols1.pdf               # IRB 反馈（只读）
+│   ├── Protocols2.pdf
+│   ├── Protocols3.pdf
+│   ├── *_REVISED.docx               # 修订后的文档（6个）
+│   └── IRB_REVISION_INSTRUCTIONS.txt
+│
+├── papers/                           # 相关论文 PDF
 │   ├── shiffrin_steyvers_1997_REM.pdf
 │   ├── ernst_banks_2002_nature.pdf
 │   ├── bahrami_2010_science.pdf
-│   └── enright_2020.pdf
-├── Simulations/                       # 模拟代码和数据（当前工作目录）
-│   ├── rem_core.py                    # REM 引擎（READ-ONLY）
-│   ├── group_rules.py                 # 7 种群体决策规则
-│   ├── run_simulation.py              # 参数扫描主程序
-│   ├── bahrami_sweep_demo.ipynb       # Jupyter notebook 包装器
-│   ├── bahrami_sweep_final.csv        # Bahrami sweep 输出
-│   ├── miscalibration_sweep.csv       # Miscalibration sweep 输出
-│   ├── bahrami_sweep_plot.png         # 5 规则比较图
-│   ├── rich_theory_verification.png   # DSS vs theory 验证图
-│   └── miscalibration_plot.png        # Prelec weighting 效应图
-├── data/                              # 模拟数据归档
-├── experiments/                       # 实验设计文档
-└── docs/                              # 其他文档
-    ├── meeting_notes/                 # 会议记录
-    └── email_threads/                 # 邮件往来
-```
+│   └── ...
+│
+├── data/                             # 模拟数据归档
+├── experiments/                      # 实验设计文档
+└── docs/                             # 其他文档
+    ├── meeting_notes/
+    └── email_threads/
 
----
+/Users/yiytan/memory-game/            # 分支 4: 在线实验系统（独立仓库）
+├── src/
+│   └── App.js                        # 核心实验逻辑（1481 行）
+├── build/                            # 生产构建
+├── package.json
+└── firebase.json
+```
 
 ## 术语表
 
 | 术语 | 英文 | 定义 |
 |------|------|------|
+| **REM 相关** | | |
 | REM | Retrieving Effectively from Memory | Rich Shiffrin 的识别记忆模型 |
 | Odds | 熟悉度比 | P(Old\|Data) / P(New\|Data) |
 | Log-odds | 对数优势比 | ln(Odds)，REM 输出的自然形式 |
-| d' | d-prime | SDT 中的敏感度指标（信号-噪音距离） |
-| **决策规则** | | |
+| **SDT 相关** | | |
+| d' | d-prime | 敏感度指标（信号-噪音距离） |
+| HR | Hit Rate | P(say "Old" \| truly Old) |
+| FAR | False Alarm Rate | P(say "Old" \| truly New) |
+| **决策规则（基础）** | | |
 | CF | Coin Flip | 分歧时随机决策 |
 | UW | Uniform Weighting | 原始 odds 算术平均 |
 | DMC | Defer to Max Confidence | 听信心最大的人 |
 | DSS | Direct Signal Sharing | log-odds 相加（理论上限） |
 | BF | Behavior & Feedback | 基于个体历史正确率学习 |
-| WCS | Weighted Confidence Sharing | 按信心加权整合 |
-| WCS_Miscal | WCS + Miscalibration | WCS + Prelec 权重函数 |
-| DMC_Miscal | DMC + Miscalibration | DMC + Prelec 权重函数 |
+| **决策规则（扩展）** | | |
+| WCS | Weighted Confidence Sharing | 按信心加权整合（Bahrami 原版） |
+| UW_Miscal | UW + Miscalibration | UW（算术平均 w）+ Prelec 权重函数 |
+| DMC_Miscal | DMC + Miscalibration | DMC + Prelec 权重函数（max |w - 0.5|）|
 | **理论概念** | | |
 | CBR | Collective Benefit Ratio | d'_team / max(d'_A, d'_B) |
 | Prelec weighting | Prelec 概率权重 | w(p) = exp(-β(-ln p)^α) |
 | α (alpha) | 校准参数 | α=1 校准，α>1 过度自信，α<1 不足自信 |
 | Orthogonal Sum | 正交和 | d'_optimal = √(d'_A² + d'_B²) |
-| Hautus Correction | Hautus 修正 | 避免 HR=1 或FAR=0 的 d' 计算方法 |
+| MLE | Maximum Likelihood Estimation | 最大似然估计 |
 | **其他** | | |
 | OI | Output Interference | 提取导致的干扰效应 |
-| MLE | Maximum Likelihood Estimation | 最大似然估计 |
-| AUC | Area Under Curve | ROC 曲线下面积 |
+| Hautus Correction | Hautus 修正 | 避免 HR=1 或 FAR=0 的 d' 计算方法 |
 | SDT | Signal Detection Theory | 信号检测理论 |
-
----
+| Umbrella Protocol | 伞状协议 | IRB 策略：通用框架，保留灵活性 |
 
 ## 常用命令
+
+### REM 模拟（分支 1 & 2）
 
 ```bash
 # 进入模拟目录
 cd /Users/yiytan/Collective_Memory/Simulations/
 
-# 运行 Bahrami Parameter Sweep（Python 脚本）
+# 运行参数扫描
 python run_simulation.py
 
-# 运行 Jupyter Notebook（推荐）
+# 或使用 Jupyter Notebook
 jupyter notebook bahrami_sweep_demo.ipynb
 
-# 在 Python 中交互运行
+# 交互式运行
 python
 >>> import run_simulation
 >>> df_bahrami = run_simulation.run_bahrami_sweep()
 >>> df_miscal = run_simulation.run_miscalibration_sweep()
 
 # 查看输出文件
-ls -lh *.csv *.png
+ls -lh outputs/*.csv outputs/*.png
+```
+
+### 在线实验（分支 4）
+
+```bash
+# 进入实验目录
+cd /Users/yiytan/memory-game
+
+# 本地开发
+npm start
+
+# 构建和部署
+npm run build
+firebase deploy
+
+# 查看部署状态
+firebase hosting:channel:list
+```
+
+## 更新日志
+
+- **2025年1月24日**：
+  - ✅ 修复 Miscalibration Sweep 重大 Bug（traces frozen 问题）
+  - ✅ 重命名 WCS_Miscal → UW_Miscal（符合 Tim 的模型语义）
+  - ✅ 整合历史日志文件到 CLAUDE.md
+  - ✅ 添加 "Debug 日志与经验教训" 章节
+  - ✅ 添加 Monte Carlo 设计原则文档
+
+- **2025年1月23日**：
+  - ✅ 修复 RNG 交叉污染 Bug
+  - ✅ 修复分母不稳定 Bug（测试项目变化）
+  - ✅ 发现并修复 Over-Correction Bug（traces 过度冻结）
+
+- **2025年1月19日**：
+  - ✅ 重组 CLAUDE.md 为模块化结构（分支 1-4 独立）
+  - ✅ 添加在线实验系统文档（分支 4）
+  - ✅ 完成 IRB Protocol #29910 修订（分支 3）
+
+- **2025年1月18日**：
+  - ✅ 完成 Rich's Conflict Resolution Model 实现（分支 1）
+  - ✅ 完成 Bahrami Parameter Sweep 实现（分支 2，含 3 个分析模块）
+  - ✅ 目录重组（创建 src/, notebooks/, outputs/, archive/）
+
+- **2025年1月14日**：
+  - ✅ 初始文档创建，整合项目背景和理论框架
+
+---
+
+## Debug 日志与经验教训
+
+> **重要规则**：所有 debug 日志、经验教训、Bug 修复记录都应记录在本文件中。**不要创建新的 .md 或 .txt 日志文件。**
+
+### 2025-01-24：Miscalibration Sweep 命名修正与 Monte Carlo 修复
+
+#### 问题诊断
+
+1. **图表混乱**：DSS、WCS_Miscal、DMC_Miscal 三条曲线几乎完全重叠
+2. **DSS Variance = 0**：代码 over-freeze 了 traces，导致 Monte Carlo 失效
+3. **命名错误**：WCS_Miscal 实际上是 UW + Prelec，不是 Bahrami 的 WCS
+
+#### Tim 的模型意图对齐
+
+根据 Tim 的邮件和说明，核心意图是：
+
+1. **Prelec 只作用在 "confidence as probability judgment" 上**
+   - REM → odds φ → p = φ/(1+φ)
+   - p → w(p; α)
+   - α 只表示主观校准偏差
+
+2. **"Replace UW Model" 的含义**
+   - 把原来 UW（算术平均 p）的 aggregation，换成"算术平均 w(p)"
+   - **这是 UW + Prelec，不是 Bahrami 的 WCS**
+
+3. **"Replace Defer-to-Max" 的含义**
+   - 决策仍是 selection
+   - 但 max 的不是原始 odds，而是 subjective confidence |w - 0.5|
+
+4. **DSS 的角色**
+   - DSS 只是 baseline/ceiling
+   - DSS 不使用 confidence，不参与 Prelec
+   - **不需要过度关注 DSS 的行为**
+
+#### 核心修复
+
+1. **traces 移回循环内**：每个 α_B 条件使用不同的 traces（不同的大脑）
+2. **seed 间隔增大**：用 `idx * 100` 而不是 `+ idx`，避免相邻条件相关
+3. **重命名**：WCS_Miscal → UW_Miscal
+4. **添加 Monte Carlo 重复**：n_reps = 20，稳定期望
+
+#### Monte Carlo 设计原则
+
+> **Monte Carlo is used to stabilize expectations, not for inference.**
+>
+> Tim 没有要求 error bars、标准误、或统计推断。Monte Carlo 只是 implementation detail，用于防止单次 realization 的假象。
+
+**固定 vs 变化的组件**：
+
+| 组件 | 是否固定 | 原因 |
+|------|---------|------|
+| test_items | ✅ 固定 | 控制任务难度（公平的考试） |
+| labels | ✅ 固定 | 控制 base rate |
+| traces | ❌ 每轮变化 | 表示被试内编码噪声（不同的大脑） |
+| L_A, L_B | ❌ 每轮重算 | 依赖于 traces |
+| α_B | 条件变量 | 只影响 Prelec subjective mapping |
+
+**"Exam vs Brain" 比喻**：
+> - **test_items = The exam** → 固定（每个人考同一张试卷）
+> - **traces = The brain** → 变化（不同被试有不同的编码噪声）
+
+**目标是 "Stable Mean + Natural Variance"**
+
+#### 三个边界声明（防止解释翻车）
+
+1. **关于 DSS**：DSS is used only as a reference baseline. Its variance is a diagnostic for frozen traces, not a modeling target.
+
+2. **关于 Monte Carlo**：Monte Carlo repetitions are internal implementation details used to stabilize expectations, not an experimental dimension.
+
+3. **关于展示**：Primary figures for discussion will show **Monte Carlo–averaged trends** across α_B; single-realization plots are used only for internal diagnostics. Use "shaded variability bands" instead of "error bars" to avoid triggering inferential interpretations.
+
+#### 关键经验教训
+
+| 原则 | 正确做法 | 错误做法 |
+|------|---------|---------|
+| Monte Carlo 定位 | 用于稳定期望，不是推断 | 当成统计检验工具 |
+| DSS Variance | 原则判断（> 0 即可） | 设数值门槛（如 ~0.001） |
+| d_best | per-realization 参考 | 跨 rep 平均 |
+| 展示策略 | MC-averaged trends | 单次 noisy curve |
+| 展示用语 | "shaded variability bands" | "error bars"（触发推断联想） |
+
+---
+
+### 2025-01-23：Prelec & Bahrami Sweep Bug 修复
+
+#### Bug #1: RNG 交叉污染
+
+**问题**：单个 `rng_cf` 被 4 个规则顺序消费，造成规则之间的虚假依赖。
+
+**证据**：DSS variance 跨 α_B 为 0.1483，理论上应接近零（DSS 在数学上与 α 无关）。
+
+**影响**：本应独立的规则通过共享 RNG 状态产生了相关性。
+
+**修复**：为每个规则创建独立的 RNG。
+
+```python
+# 修复后：每个规则独立 RNG
+rng_uw = np.random.default_rng(condition_seed + 5000)
+rng_dmc = np.random.default_rng(condition_seed + 6000)
+rng_dss = np.random.default_rng(condition_seed + 7000)
+rng_cf = np.random.default_rng(condition_seed + 8000)
+```
+
+#### Bug #2: 分母不稳定
+
+**问题**：测试项目（有时包括 traces）在每次 sweep 迭代中重新生成，导致 d_best 人为变化。
+
+**证据**：
+- d_best 标准差：0.0326（跨 α_B 迭代）
+- 在特定 α_B 值（1.2, 1.5）出现尖峰
+
+**影响**：CBR 变化是由于分母波动，而非真正的性能差异。
+
+**修复**：测试项目在循环外生成一次（固定考试）。
+
+#### Bug #3: Over-Correction（过度修正）
+
+**问题**：早晨的 bug fix 把 traces 也移到了循环外，导致 DSS Variance = 0.0（完全冻结）。
+
+**证据**：DSS 变成完美平坦的"死线"，没有任何 Monte Carlo 噪声。
+
+**影响**：这不是 Monte Carlo，是 deterministic sensitivity analysis。
+
+**修复**：traces 移回循环内，但测试项目保持在循环外。
+
+#### 验证结果
+
+**修复前后对比**：
+
+| 指标 | 修复前 (Buggy) | Over-Frozen | 修复后 (Correct) | 状态 |
+|------|---------------|-------------|------------------|------|
+| DSS Variance | 0.148 | 0.000 | ~0.0145 | ✅ |
+| d_best Stability | 变化 | 常数 | 略有变化（自然） | ✅ |
+| RNG Independence | 共享 | 独立 | 独立 | ✅ |
+| Monte Carlo | 破坏 | 停止 | 活跃 | ✅ |
+
+---
+
+### 2025-01-18：目录重组
+
+**执行的操作**：
+
+1. ✅ 创建新目录结构：src/, notebooks/, outputs/, archive/
+2. ✅ 移动核心代码到 src/：rem_core.py, group_rules.py, run_simulation.py
+3. ✅ 移动 notebooks 和导出：bahrami_sweep_demo.ipynb → notebooks/
+4. ✅ 归档遗留文件：legacy_code/, legacy_results/, legacy_docs/
+5. ✅ 清理系统文件：删除 .DS_Store 和 __pycache__/
+6. ✅ 创建 .gitignore
+7. ✅ 更新所有代码路径
+
+**新结构**：
+```
+Simulations/
+├── src/                    # 3 core Python files
+├── notebooks/              # 1 notebook + 3 exports
+├── outputs/               # 5 current result files
+├── archive/               # 14 legacy files (organized)
+├── README.md              # Updated with usage instructions
+└── .gitignore            # Git configuration
 ```
 
 ---
 
-## 下一步任务
+### 2025-01-24：高性能重构经验教训
 
-### 当前阶段（已完成 ✅）
+#### 实际完成的优化
 
-1. ✅ **Bahrami Parameter Sweep**
-   - 实现 5 种决策规则（CF, UW, DMC, DSS, BF）
-   - 完成能力异质性参数扫描（c_B 0.1-0.9）
-   - 生成 Collective Benefit Ratio 分析
+1. **"Compute Once, Transform Many" 模式** ✅ 已合并
+   - 核心洞察：α_B 只影响 Prelec 变换，不影响 REM 证据 (L_A, L_B)
+   - 循环结构翻转：`rep 外层 → α_B 内层`
+   - REM 调用从 220 次 → 20 次 = **11x 加速**
+   - 这是主要性能收益来源
 
-2. ✅ **Rich's 理论验证**
-   - DSS vs SDT 正交和理论对比
-   - 定量验证模拟准确性
+2. **REM Trace-level 向量化**（当前实验采用，experiment-specific）
+   - `compute_log_odds_vectorized` 移除了 trace-level Python loop
+   - 所有 trace likelihood 被压进 NumPy matrix + logsumexp
+   - 公式严格复刻原实现：`λ_v = (c + (1 - c) * P_v) / P_v`，其中 `P_v = g(1-g)^(v-1)`
+   - **数值验证**：在当前参数区间内，max diff = 4.44e-16（机器精度）
 
-3. ✅ **信心校准分析**
-   - 实现 Prelec 概率权重函数
-   - WCS_Miscal 和 DMC_Miscal 规则
-   - α_B 参数扫描（0.5-1.5）
+   **⚠️ Fact vs Norm 分离**：
+   - **Fact（当前实验做了什么）**：当前 miscalibration sweep 实验使用 trace-level 向量化，已在该实验的参数区间内通过数值验证
+   - **Norm（未来实验的默认选择）**：Trace-level 向量化**不是**推荐的 REM 设计模式。当前实现是 **"Verified exception for this experiment, not a general design pattern"**
 
-### 近期任务（分析当前结果）
+3. **诊断检查修正** ✅
+   - DSS 跨 α_B 的方差设计上为 0（DSS 不依赖 α）
+   - 正确检查：`cbr_std`（Monte Carlo 跨 rep 的标准差）
 
-1. **解读 Bahrami sweep 结果**
-   - 哪些规则在何时产生集体增益（CBR > 1）？
-   - UW 和 DMC 的表现差异说明了什么？
-   - BF 学习效应有多强？
+#### 关键安全约束
 
-2. **验证理论符合度**
-   - DSS 与理论上限的偏差大小
-   - 偏差的系统性（是否随 c_B 变化）
-   - REM 非正态性的影响
+1. **决策规则 RNG 作用域**（硬性约束）
+   - **DMC tie-breaking**：使用专用 `rng_dmc_tie = np.random.default_rng(rep_seed + 999)`
+   - **CF (Coin Flip)**：使用专用 `rng_cf = np.random.default_rng(rep_seed + 555)`
+   - **两者都必须在 α_B 循环外、per Monte Carlo rep 创建一次**
+   - **跨所有 α_B 值复用同一个 RNG 实例**
+   - **禁止在 α_B 循环内实例化任何决策相关的 RNG**
+   - 决策随机性是 rep-level only，与 α_B 无关。任何偏离都是建模错误。
 
-3. **分析信心校准效应**
-   - 匹配校准（α_A = α_B = 1.2）vs 错配（α_A ≠ α_B）
-   - WCS_Miscal vs DMC_Miscal 的性能差异
-   - 信心校准对不同规则的影响程度
+2. **`np.allclose` 使用规则**（硬性分离）
+   - ✅ **允许**：函数级数值等价检查（如 scalar `compute_log_odds` vs vectorized 实现）
+   - ❌ **严格禁止**用于：
+     - Monte Carlo 输出
+     - 聚合指标
+     - 任何 ratio 类指标（如 d'_team / d'_best）
+   - Ratio 指标本质上有 Monte Carlo 噪声，逐点等价检查会 debug 不存在的 bug
 
-### 未来方向（扩展研究）
+#### 红线声明（未来修改必读）
 
-1. **变更能力差异设置**
-   - 两个专家（c_A = c_B = 0.8）
-   - 两个新手（c_A = c_B = 0.3）
-   - 极端异质性（c_A = 0.9, c_B = 0.1）
+当前 **miscalibration sweep 实验**使用了 trace-level 向量化的 REM likelihood 计算，作为**该实验验证过的例外**，而非推荐的通用 REM 实现模式。
 
-2. **群体规模扩展**
-   - N = 3, 4, 5 人群体
-   - 多数投票的临界点
-   - DSS 随 N 增长的收益
+这已在该实验的参数区间内通过数值验证，但：
 
-3. **动态过程研究**（需与 Rich 讨论）
-   - 加入 Output Interference (OI)
-   - BF 的跨 trial 学习曲线
-   - 信心校准的动态调整
+**红线 1 - 向量化边界**：
+- 未来修改**不得假设** trace-level 向量化是普遍安全的
+- 任何修改**必须**重新对照原始 scalar 实现验证
+- **特别关注 edge trials 和 conflict trials**——向量化错误最可能在这些 trial 上暴露
 
-4. **实验验证**
-   - 设计行为实验测试模型预测
-   - Steve 的"无信心评分"实验设计
-   - 预曝光专长操纵实验
+**红线 2 - RNG 作用域**：
+- DMC tie-breaking：`rng_dmc_tie = np.random.default_rng(rep_seed + 999)`
+- CF (Coin Flip)：`rng_cf = np.random.default_rng(rep_seed + 555)`
+- 两者都必须在 α_B 循环外创建，禁止在 α 循环内实例化
 
----
+**红线 3 - 验证策略**：
+- `np.allclose` 仅用于函数级数值等价检查
+- 禁止对 Monte Carlo 输出或 ratio 指标使用逐点等价检查
 
-## 关键公式速查
-
-### REM Odds
-
-$$\text{Odds} = \frac{1}{n} \sum_{i=1}^{n} \left(\frac{c + (1-c)g}{g}\right)^{K_M^i} (1-c)^{K_N^i}$$
-
-### d' 计算（Hautus Correction）
-
-$$\text{HR} = \frac{\text{hits} + 0.5}{S + 1}, \quad \text{FAR} = \frac{\text{fas} + 0.5}{N + 1}$$
-
-$$d' = \Phi^{-1}(\text{HR}) - \Phi^{-1}(\text{FAR})$$
-
-### Collective Benefit Ratio
-
-$$\text{CBR} = \frac{d'_{\text{team}}}{\max(d'_A, d'_B)}$$
-
-### DSS 在 REM 下的实现
-
-$$\text{Odds}_{\text{group}} = \prod_i \text{Odds}_i$$
-
-或等价地：
-
-$$\log \text{Odds}_{\text{group}} = \sum_i \log \text{Odds}_i$$
-
-### UW 规则（原始 Odds 平均）
-
-$$\text{Odds}_{\text{group}} = \frac{1}{N} \sum_{i=1}^{N} \text{Odds}_i$$
-
-### Prelec 概率权重函数
-
-$$w(p) = \exp(-\beta \cdot (-\ln p)^\alpha)$$
-
-$$\beta = (\ln 2)^{1-\alpha} \quad \text{（确保 } w(0.5) = 0.5 \text{）}$$
-
-### 正交和理论（SDT 独立噪声）
-
-$$d'_{\text{theory}} = \sqrt{d'_A^2 + d'_B^2}$$
-
-### Ernst MLE 加权
-
-$$w_i = \frac{1/\sigma_i^2}{\sum_j 1/\sigma_j^2}$$
+这不是关于代码速度，而是关于科学可解释性。
 
 ---
 
-## 注意事项
+**🔒 优化阶段关闭**
 
-### 理论约束
+Optimization phase closed for the current miscalibration sweep experiment.
+Trace-level vectorization is a verified exception for this specific experiment, not a general REM design pattern.
+Future experiments or parameter regions require scientific justification and re-verification against the scalar implementation.
 
-1. **REM 的角色**：REM 只是"证据生成器"，不负责社会整合
-2. **DSS 是上限**：人类无法真正"直接共享内部信号"，但它提供理论基准
-3. **个体差异很大**：83 名被试从随机到完美呈线性分布（Rich 的数据）
+不引入进一步重构或优化，不重新审视向量化决策，仅执行科学分析。
 
-### 实现细节（CRITICAL）
+#### 最终性能
 
-4. **UW 规则必须用原始 Odds**：不是 log-space 平均，是 `(exp(L_A) + exp(L_B)) / 2`
-5. **BF 规则学习机制**：分数更新基于**个体**正确性，非群体决策正确性
-6. **Prelec 函数约束**：β 必须使 w(0.5) = 0.5，否则不是交叉点
-7. **DMC_Miscal 信心定义**：conf = |w - 0.5|（距离中点），不是原始 w
-
-### RNG 独立性
-
-8. **条件间独立**：每个参数扫描点重新初始化 RNGs
-9. **个体间独立**：Agent A 和 B 使用不同的 seed（+1000, +2000）
-10. **刺激驱动共享**：study list 和 test list 用同一个 rng_test
-
-### 文件依赖
-
-11. **rem_core.py 是 READ-ONLY**：不修改 REM 引擎，只导入使用
-12. **三个分析部分独立**：Bahrami, Rich's verification, Miscalibration 互不影响
-13. **暂不做 OI**：Rich 明确建议先做静态规则，避免混淆因素
+| 指标 | 优化前 | 优化后 | 加速 |
+|------|--------|--------|------|
+| 总运行时间 | ~8 分钟 | ~12 秒 | **40x** |
+| `compute_log_odds` 单次 | 1.7ms | 0.075ms | **22x** |
+| REM 调用次数 | 220 | 20 | **11x** |
 
 ---
 
-## 联系方式
-
-- **主要导师**：Tim Pleskac（UCR）
-- **REM 专家**：Rich Shiffrin（Indiana）
-- **识别记忆**：Steve Clark（UCR）
-- **协作记忆**：Suparna Rajaram（Stony Brook）
-
----
-
-## 更新日志
-
-- **2025年1月18日**：完成 Bahrami Parameter Sweep 实现（3个分析模块：Bahrami sweep, Rich's verification, Prelec miscalibration）
-- **2025年1月14日**：初始文档创建，整合项目背景和理论框架
-
----
-
-*最后更新：2025年1月18日*
+*最后更新：2025年1月24日*
