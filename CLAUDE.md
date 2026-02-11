@@ -10,7 +10,8 @@
    - [分支 3: IRB Protocol #29910](#分支-3-irb-protocol-29910-)
    - [分支 4: Online Experiment System](#分支-4-online-experiment-system-)
 4. [会议记录](#会议记录)
-5. [项目管理](#项目管理)
+5. [工作模式与协作原则](#工作模式与协作原则)
+6. [项目管理](#项目管理)
 
 ---
 
@@ -1027,6 +1028,50 @@ firebase deploy
 
 ---
 
+# 📊 当前项目状态 (Current Status)
+
+## 最近进展 (2026年2月)
+
+### 2026-02-08：Google Doc 整理 + 邮件发送
+
+**完成的工作**：
+1. ✅ 整理了完整的 Google Doc 进展汇报（Google_Doc_Content_v2.md）
+2. ✅ 给 Tim 发送邮件征求反馈
+
+**邮件内容**：
+> Hi Tim,
+>
+> Following up on our last discussion, I put together a draft Google Doc to summarize where we are with the REM simulations. The goal is mainly to give the group a clear snapshot of what we've run so far, what the main patterns and predictions look like, and how those connect to a few possible experimental designs going forward.
+>
+> The document pulls together the Bahrami-style sweep, the hit/CR decompositions, the miscalibration results, and some concrete design options we talked about.
+>
+> Before circulating it more broadly, I'd really appreciate your thoughts on whether the framing makes sense, what feels convincing or unclear, etc. If you're willing, any comments directly in the doc or high-level reactions by email would be very helpful, and I can revise accordingly.
+>
+> Best,
+> Yiyan
+>
+> [Google Doc Link]
+
+**当前状态**：等待 Tim 反馈
+
+### 待办事项
+
+| 优先级 | 任务 | 状态 |
+|--------|------|------|
+| ⏳ | 等待 Tim 对 Google Doc 的反馈 | 进行中 |
+| 📋 | 根据反馈修订文档 | 待开始 |
+| 📋 | 修复 DSS ≈ DMC 重叠问题（Tim 关切） | 待开始 |
+| 📋 | 简化验证：0.7 vs 0.7 case | 待开始 |
+| 📋 | 分离报告 Hits 和 CR | 待开始 |
+
+### 关键待解决问题
+
+1. **Tim 的核心关切**：如何把 simulation 中的 c（编码质量）映射到实验操纵？
+2. **实验设计选择**：Design 1（事后分类）vs Design 2（操纵学习时长/次数）
+3. **DSS ≈ DMC 问题**：为什么两条曲线几乎完全重叠？
+
+---
+
 # 会议记录
 
 ## 2024年12月大会议
@@ -1149,6 +1194,110 @@ firebase deploy
 
 ---
 
+# 工作模式与协作原则
+
+## Yi-Yi 的工作习惯
+
+### 优势
+
+1. **计划驱动**：习惯在执行前制定清晰的计划和步骤
+2. **验证优先**：重视通过测试和验证确认结果正确性
+3. **文档化思维**：善于记录过程、决策和经验教训
+4. **增量迭代**：倾向于小步前进，逐步完善
+5. **与导师保持清晰沟通**：定期汇报进展，寻求反馈
+
+### 潜在盲点（针对该项目）
+
+1. **模拟代码修改后可能忘记重跑验证**：Monte Carlo 设计的改动需要重新验证
+2. **向导师汇报时可能遗漏关键技术细节**：Tim 和 Rich 关注不同层面的细节
+3. **多分支并行时容易忘记某个分支的状态**：4 个独立分支各有不同的工作流和待办事项
+
+---
+
+## Claude 协作核心原则（Soul）
+
+### 1. 执行 → 汇报 → 延伸 → 建议
+
+**核心理念**：不只是完成任务，而是形成完整的工作闭环。
+
+- **执行**：准确完成用户请求的任务
+- **汇报**：清晰总结完成的内容和结果
+- **延伸**：主动思考相关的后续步骤或影响
+- **建议**：提出有价值的下一步行动建议
+
+### 2. 多想一步、两步、三步
+
+**核心理念**：预见性思考，帮助用户避免潜在问题。
+
+- 完成当前任务时，思考这个改动会影响什么
+- 考虑用户可能忘记的相关任务
+- 预判可能出现的问题并提前提醒
+
+### 3. 成长型思维
+
+**核心理念**：持续学习和改进的伙伴关系。
+
+- 记录项目中的经验教训
+- 从错误中学习，避免重复相同的问题
+- 随着项目推进，对项目的理解越来越深入
+
+### 4. 不只是执行者，更是思考伙伴
+
+**核心理念**：提供智识价值，而非仅仅是工具。
+
+- 理解任务背后的目的和研究问题
+- 在适当的时候提出建设性的疑问
+- 帮助思考问题的不同角度
+
+### 5. 发散性思维
+
+**核心理念**：在适当的时候提供创造性的想法。
+
+- 当遇到问题时，探索多种解决方案
+- 联系不同领域的知识
+- 提出可能被忽视的替代方案
+
+### 6. 主动式检查清单
+
+**核心理念**：在关键节点主动提醒可能遗漏的事项。
+
+- 完成重要任务后，主动询问相关的后续步骤
+- 根据项目的工作流程，提供情境化的提醒
+- 帮助用户保持对所有分支的关注
+
+---
+
+## 该项目的主动式提示
+
+> 以下是针对 Collective Memory 项目特点定制的主动式提醒。Claude 应在完成相应阶段任务后主动提出这些问题。
+
+| 阶段 | 完成后主动提示 |
+|------|---------------|
+| **模拟代码修改** | "需要重跑验证吗？Monte Carlo 设计是否需要调整？" |
+| **分析结果生成** | "需要更新 Google Doc 吗？要发邮件给 Tim 吗？" |
+| **IRB 文档修改** | "需要一致性检查吗？所有文档的时间/补偿/程序描述是否一致？" |
+| **在线实验代码修改** | "DEBUG_MODE 状态是什么？需要部署到 Firebase 吗？" |
+| **完成某个分支的任务** | "其他分支有待办事项吗？当前状态是什么？" |
+| **与导师沟通前** | "需要准备的关键点有哪些？有什么技术细节需要特别说明？" |
+
+### 项目特定的检查点
+
+**分支 1 & 2（REM 模拟）**：
+- 修改 `group_rules.py` 或 `run_simulation.py` 后：重跑验证
+- 生成新的输出文件后：检查 CSV 行数、图表是否符合预期
+- Monte Carlo 相关修改：确认 traces vs test_items 的 freeze/vary 设计
+
+**分支 3（IRB）**：
+- 修改任何 IRB 文档后：运行一致性检查（时间、补偿、程序描述）
+- 新增内容时：确认是否符合 "Umbrella Protocol" 策略（保持通用性）
+
+**分支 4（在线实验）**：
+- 修改 `App.js` 后：确认 DEBUG_MODE 状态
+- 部署前：`npm run build` + 检查 Firestore 规则
+- 修改数据结构后：更新 Python 数据导出脚本
+
+---
+
 # 项目管理
 
 ## 项目文件结构
@@ -1162,6 +1311,10 @@ Collective_Memory/
 │   │   ├── rem_core.py              # REM 引擎（READ-ONLY）
 │   │   ├── group_rules.py           # 7 种群体决策规则
 │   │   └── run_simulation.py        # 参数扫描主程序
+│   ├── learning_materials/          # 学习资源（非正式代码）
+│   │   ├── REM-2FC.py               # 复杂2FC REM模拟示例
+│   │   ├── REM-generic.py           # 简洁REM学习版本
+│   │   └── R codes to yiyan.r       # R数据分析示例
 │   ├── notebooks/
 │   │   └── bahrami_sweep_demo.ipynb # Jupyter 包装器
 │   └── outputs/
@@ -1548,4 +1701,95 @@ Future experiments or parameter regions require scientific justification and re-
 
 ---
 
-*最后更新：2025年1月24日*
+# 科研智能：Collective Memory 项目全景理解
+
+## 项目定位
+
+- 这是 Yi-Yi 的第二个主要研究项目
+- 与 Memory_Context 互补：个体记忆抑制 vs 群体记忆决策
+- 合作导师：Rich (REM理论) + Tim (决策建模) + Steve (实验设计)
+
+## 技术栈特点
+
+| 组件 | 技术 |
+|------|------|
+| Python模拟 | numpy, scipy, pandas |
+| 在线实验 | React 19 + Firebase Firestore |
+| 多人同步 | 实时数据库 |
+| 部署 | Firebase Hosting |
+
+## 自动化工作流程
+
+| 当 Yi-Yi 说... | Claude 预期... |
+|----------------|----------------|
+| "运行模拟" | 问清参数（c_A, c_B, 规则类型） |
+| "测试在线实验" | 检查 Firebase 配置和部署状态 |
+| "分析结果" | 准备 d', CBR, 理论对比 |
+| "准备汇报" | 整理 Google Doc 内容，邮件草稿 |
+| "修改 IRB" | 运行一致性检查，保持 Umbrella Protocol 策略 |
+
+## 关键资源速查
+
+| 需要 | 去哪里 |
+|------|--------|
+| REM 核心代码 | `Simulations/src/rem_core.py` |
+| 群体决策规则 | `Simulations/src/group_rules.py` |
+| 参数扫描 | `Simulations/src/run_simulation.py` |
+| 在线实验 | `/Users/yiytan/memory-game/` (React项目) |
+| 理论公式 | CLAUDE.md 共享理论基础章节 |
+| 学习资源 | `Simulations/learning_materials/` |
+| 文件索引 | `FILE_INDEX.md` |
+
+## 导师期望模式
+
+| 导师 | 专长 | 典型问题 |
+|------|------|----------|
+| Rich | REM模型创始人 | "这个参数在模型里代表什么？" |
+| Tim | 贝叶斯决策 | "与Bahrami的预测比较如何？" |
+| Steve | 实验设计 | "需要多少被试才能检测到效应？" |
+
+## 学习资源说明
+
+`Simulations/learning_materials/` 目录包含学习和参考材料，**非正式项目代码**：
+
+| 文件 | 说明 | 用途 |
+|------|------|------|
+| `REM-2FC.py` | 复杂2FC REM模拟（5000学习列表，3种刺激类型） | 学习REM高级实现 |
+| `REM-generic.py` | 简洁REM学习版本（100项目） | 理解REM基础逻辑 |
+| `R codes to yiyan.r` | R数据分析和ggplot可视化 | R语言数据处理参考 |
+
+**注意**：这些文件来自早期学习阶段，保留作为参考。正式项目代码在 `src/` 目录。
+
+---
+
+# 项目时间线
+
+## 发展历程
+
+| 阶段 | 时间 | 主要内容 | 状态 |
+|------|------|----------|------|
+| **理论学习** | 2023-2024 | 学习REM模型、Bahrami框架、SDT基础 | ✅ 已完成 |
+| **模拟开发** | 2024年底-2025年1月 | 实现7种群体决策规则、参数扫描 | ✅ 已完成 |
+| **模拟验证** | 2025年1月 | Bug修复、Monte Carlo设计优化 | ✅ 已完成 |
+| **IRB提交** | 2025年1月 | Protocol #29910 提交与修订 | ✅ 已提交 |
+| **在线实验开发** | 2025年1月 | React + Firebase 系统开发与部署 | ✅ 已部署 |
+| **实验准备** | 当前 | 等待Tim反馈、准备被试招募 | 🔄 进行中 |
+| **数据收集** | 下一步 | 招募被试、运行在线实验 | ⏳ 待开始 |
+| **数据分析** | 未来 | 分析实验数据、验证模型预测 | ⏳ 待开始 |
+
+## 当前阶段：实验准备
+
+**主要任务**：
+1. 等待 Tim 对 Google Doc 的反馈
+2. 根据反馈修订模拟设计
+3. 确定最终实验参数
+4. 准备被试招募（Prolific + SONA）
+
+**关键待解决问题**：
+1. 如何把 simulation 中的 c（编码质量）映射到实验操纵？
+2. 实验设计选择：Design 1（事后分类）vs Design 2（操纵学习时长/次数）
+3. DSS ≈ DMC 曲线重叠问题
+
+---
+
+*最后更新：2026年2月11日*
